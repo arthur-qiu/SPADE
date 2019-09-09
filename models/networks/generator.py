@@ -223,6 +223,54 @@ class LABELSPADEGenerator(BaseNetwork):
 
         return x
 
+    def f1(self, input, z=None):
+        seg = input
+
+        if self.opt.use_vae:
+            # we sample z from unit normal and reshape the tensor
+            if z is None:
+                z = torch.randn(input.size(0), self.opt.z_dim,
+                                dtype=torch.float32, device=input.get_device())
+            x = self.fc(z)
+            x = x.view(-1, 16 * self.opt.ngf, self.sh, self.sw)
+        else:
+            # we downsample segmap and run convolution
+            x = F.interpolate(seg, size=(self.sh, self.sw))
+            x = self.fc(x)
+
+        x = self.head_0(x, seg)
+        return x
+
+    def h1(self, x, input):
+        seg = input
+
+        x = self.up(x)
+        x = self.G_middle_0(x, seg)
+
+        if self.opt.num_upsampling_layers == 'more' or \
+           self.opt.num_upsampling_layers == 'most':
+            x = self.up(x)
+
+        x = self.G_middle_1(x, seg)
+
+        x = self.up(x)
+        x = self.up_0(x, seg)
+        x = self.up(x)
+        x = self.up_1(x, seg)
+        x = self.up(x)
+        x = self.up_2(x, seg)
+        x = self.up(x)
+        x = self.up_3(x, seg)
+
+        if self.opt.num_upsampling_layers == 'most':
+            x = self.up(x)
+            x = self.up_4(x, seg)
+
+        x = self.conv_img(F.leaky_relu(x, 2e-1))
+        x = F.tanh(x)
+
+        return x
+
 
 class INTERPSPADEGenerator(BaseNetwork):
     @staticmethod

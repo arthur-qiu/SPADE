@@ -186,7 +186,7 @@ class INTERPSPADEGenerator(BaseNetwork):
         if z is None:
             z = torch.randn(input.size(0), self.opt.z_dim,
                             dtype=torch.float32, device=input.get_device())
-        z = z.view(-1, 16 * self.opt.ngf, self.sh, self.sw)
+        z = z.view(1, 16 * self.opt.ngf, self.sh, self.sw)
         x = self.fc(z)
 
 

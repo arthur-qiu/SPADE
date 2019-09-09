@@ -134,7 +134,7 @@ class INTERPSPADEGenerator(BaseNetwork):
 
         self.sw, self.sh = self.compute_latent_vector_size(opt)
 
-        self.fc = nn.Linear(opt.z_dim, 16 * nf * self.sw * self.sh)
+        self.fc = nn.Conv2d(self.opt.semantic_nc, 16 * nf, 3, padding=1)
 
         # if opt.use_vae:
         #     # In case of VAE, we will sample from random z vector
@@ -186,8 +186,9 @@ class INTERPSPADEGenerator(BaseNetwork):
         if z is None:
             z = torch.randn(input.size(0), self.opt.z_dim,
                             dtype=torch.float32, device=input.get_device())
+        z = z.view(-1, 16 * self.opt.ngf, self.sh, self.sw)
         x = self.fc(z)
-        x = x.view(-1, 16 * self.opt.ngf, self.sh, self.sw)
+
 
         # if self.opt.use_vae:
         #     # we sample z from unit normal and reshape the tensor

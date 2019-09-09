@@ -86,8 +86,6 @@ class SPADEGenerator(BaseNetwork):
         else:
             # we downsample segmap and run convolution
             x = F.interpolate(seg, size=(self.sh, self.sw))
-            print(x.shape)
-            exit()
             x = self.fc(x)
 
         x = self.head_0(x, seg)
@@ -186,9 +184,9 @@ class INTERPSPADEGenerator(BaseNetwork):
         seg = input
 
         if z is None:
-            z = torch.randn(input.size(0), self.opt.z_dim,
+            z = torch.randn(36*self.sh*self.sw,
                             dtype=torch.float32, device=input.get_device())
-        z = z.view(1, 16 * self.opt.ngf, self.sh, self.sw)
+        z = z.view(1, 36, self.sh, self.sw)
         x = self.fc(z)
 
 

@@ -206,8 +206,8 @@ class LabelPix2PixModel(torch.nn.Module):
 
         temp_x = self.netG.f1(input_semantics, z=z)
         temp_x1 = self.netG.f1(input1_semantics, z=z)
-        # fake_image = self.netG.h1((temp_x+temp_x1)/2,input1_semantics)
-        fake_image = self.netG.h1(temp_x1, input1_semantics)
+        fake_image = self.netG.h1((temp_x+temp_x1)/2,input1_semantics)
+        # fake_image = self.netG.h1(temp_x1, input1_semantics)
 
         assert (not compute_kld_loss) or self.opt.use_vae, \
             "You cannot compute KLD loss if opt.use_vae == False"

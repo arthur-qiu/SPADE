@@ -19,12 +19,11 @@ class LabelPix2pixDataset(BaseDataset):
     def initialize(self, opt):
         self.opt = opt
 
-        label_paths, image_paths, instance_paths, label1_paths, image1_paths, instance1_paths = self.get_paths(opt)
+        label_paths, image_paths, instance_paths, label1_paths, instance1_paths = self.get_paths(opt)
 
         util.natural_sort(label_paths)
         util.natural_sort(image_paths)
         util.natural_sort(label1_paths)
-        util.natural_sort(image1_paths)
         if not opt.no_instance:
             util.natural_sort(instance_paths)
             util.natural_sort(instance1_paths)
@@ -34,7 +33,6 @@ class LabelPix2pixDataset(BaseDataset):
         instance_paths = instance_paths[:opt.max_dataset_size]
 
         label1_paths = label1_paths[:opt.max_dataset_size]
-        image1_paths = image1_paths[:opt.max_dataset_size]
         instance1_paths = instance1_paths[:opt.max_dataset_size]
 
         if not opt.no_pairing_check:
@@ -47,7 +45,6 @@ class LabelPix2pixDataset(BaseDataset):
         self.instance_paths = instance_paths
 
         self.label1_paths = label1_paths
-        self.image1_paths = image1_paths
         self.instance1_paths = instance1_paths
 
         size = len(self.label_paths)
@@ -90,15 +87,6 @@ class LabelPix2pixDataset(BaseDataset):
         transform_image = get_transform(self.opt, params)
         image_tensor = transform_image(image)
 
-        image1_path = self.image1_paths[index]
-        assert self.paths_match(label1_path, image1_path), \
-            "The label_path %s and image_path %s don't match." % \
-            (label1_path, image1_path)
-        image1 = Image.open(image1_path)
-        image1 = image1.convert('RGB')
-
-        image1_tensor = transform_image(image1)
-
         # if using instance maps
         if self.opt.no_instance:
             instance_tensor = 0
@@ -121,7 +109,6 @@ class LabelPix2pixDataset(BaseDataset):
                       'image': image_tensor,
                       'label1': label1_tensor,
                       'instance1': instance1_tensor,
-                      'image1': image1_tensor,
                       'path': image_path,
                       }
 

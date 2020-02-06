@@ -8,7 +8,7 @@ import models.networks as networks
 import util.util as util
 
 
-class LabelPix2PixModel(torch.nn.Module):
+class Pix2PixModel(torch.nn.Module):
     @staticmethod
     def modify_commandline_options(parser, is_train):
         networks.modify_commandline_options(parser, is_train)
@@ -39,7 +39,7 @@ class LabelPix2PixModel(torch.nn.Module):
     # can't parallelize custom functions, we branch to different
     # routines based on |mode|.
     def forward(self, data, mode):
-        input_semantics, real_image, input1_semantics = self.preprocess_input(data)
+        input_semantics, real_image = self.preprocess_input(data)
 
         if mode == 'generator':
             g_loss, generated = self.compute_generator_loss(
@@ -54,7 +54,7 @@ class LabelPix2PixModel(torch.nn.Module):
             return mu, logvar
         elif mode == 'inference':
             with torch.no_grad():
-                fake_image, _ = self.generate_fake(input_semantics, real_image, input1_semantics)
+                fake_image, _ = self.generate_fake(input_semantics, real_image)
             return fake_image
         else:
             raise ValueError("|mode| is invalid")
@@ -109,13 +109,10 @@ class LabelPix2PixModel(torch.nn.Module):
     def preprocess_input(self, data):
         # move to GPU and change data types
         data['label'] = data['label'].long()
-        data['label1'] = data['label1'].long()
         if self.use_gpu():
             data['label'] = data['label'].cuda()
             data['instance'] = data['instance'].cuda()
             data['image'] = data['image'].cuda()
-            data['label1'] = data['label1'].cuda()
-            data['instance1'] = data['instance1'].cuda()
 
         # create one-hot label map
         label_map = data['label']
@@ -125,20 +122,13 @@ class LabelPix2PixModel(torch.nn.Module):
         input_label = self.FloatTensor(bs, nc, h, w).zero_()
         input_semantics = input_label.scatter_(1, label_map, 1.0)
 
-        label1_map = data['label1']
-        input1_label = self.FloatTensor(bs, nc, h, w).zero_()
-        input1_semantics = input1_label.scatter_(1, label1_map, 1.0)
-
         # concatenate instance map if it exists
         if not self.opt.no_instance:
             inst_map = data['instance']
             instance_edge_map = self.get_edges(inst_map)
             input_semantics = torch.cat((input_semantics, instance_edge_map), dim=1)
-            inst1_map = data['instance1']
-            instance1_edge_map = self.get_edges(inst1_map)
-            input1_semantics = torch.cat((input1_semantics, instance1_edge_map), dim=1)
 
-        return input_semantics, data['image'], input1_semantics
+        return input_semantics, data['image']
 
     def compute_generator_loss(self, input_semantics, real_image):
         G_losses = {}
@@ -195,7 +185,7 @@ class LabelPix2PixModel(torch.nn.Module):
         z = self.reparameterize(mu, logvar)
         return z, mu, logvar
 
-    def generate_fake(self, input_semantics, real_image, input1_semantics, compute_kld_loss=False):
+    def generate_fake(self, input_semantics, real_image, compute_kld_loss=False):
         z = None
         KLD_loss = None
         if self.opt.use_vae:
@@ -203,10 +193,7 @@ class LabelPix2PixModel(torch.nn.Module):
             if compute_kld_loss:
                 KLD_loss = self.KLDLoss(mu, logvar) * self.opt.lambda_kld
 
-        temp_x = self.netG.f1(input_semantics, z=z)
-        temp_x1 = self.netG.f1(input1_semantics, z=z)
-        fake_image = self.netG.h1((temp_x+temp_x1)/2,input1_semantics)
-        # fake_image = self.netG.h1(temp_x1, input1_semantics)
+        fake_image = self.netG(input_semantics, z=z)
 
         assert (not compute_kld_loss) or self.opt.use_vae, \
             "You cannot compute KLD loss if opt.use_vae == False"

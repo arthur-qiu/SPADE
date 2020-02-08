@@ -64,6 +64,8 @@ class SPADEGenerator(BaseNetwork):
             num_up_layers = 6
         elif opt.num_upsampling_layers == 'most':
             num_up_layers = 7
+        elif opt.num_upsampling_layers == 'less':
+            num_up_layers = 3
         else:
             raise ValueError('opt.num_upsampling_layers [%s] not recognized' %
                              opt.num_upsampling_layers)
@@ -328,6 +330,8 @@ class INTERPSPADEGenerator(BaseNetwork):
             num_up_layers = 6
         elif opt.num_upsampling_layers == 'most':
             num_up_layers = 7
+        elif opt.num_upsampling_layers == 'less':
+            num_up_layers = 3
         else:
             raise ValueError('opt.num_upsampling_layers [%s] not recognized' %
                              opt.num_upsampling_layers)

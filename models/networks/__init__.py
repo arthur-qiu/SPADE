@@ -31,7 +31,7 @@ def modify_commandline_options(parser, is_train):
     if is_train:
         netD_cls = find_network_using_name(opt.netD, 'discriminator')
         parser = netD_cls.modify_commandline_options(parser, is_train)
-    netE_cls = find_network_using_name('conv', 'encoder')
+    netE_cls = find_network_using_name(opt.netE, 'encoder')
     parser = netE_cls.modify_commandline_options(parser, is_train)
 
     return parser
@@ -59,5 +59,5 @@ def define_D(opt):
 
 def define_E(opt):
     # there exists only one encoder type
-    netE_cls = find_network_using_name('conv', 'encoder')
+    netE_cls = find_network_using_name(opt.netE, 'encoder')
     return create_network(netE_cls, opt)

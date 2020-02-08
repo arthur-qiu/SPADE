@@ -74,9 +74,6 @@ class SPADEGenerator(BaseNetwork):
         return sw, sh
 
     def forward(self, input, z=None):
-        print(self.sh, self.sw)
-        print(input.shape)
-        exit()
         seg = input
 
         if self.opt.use_vae:
@@ -173,6 +170,8 @@ class LABELSPADEGenerator(BaseNetwork):
             num_up_layers = 6
         elif opt.num_upsampling_layers == 'most':
             num_up_layers = 7
+        elif opt.num_upsampling_layers == 'less':
+            num_up_layers = 3
         else:
             raise ValueError('opt.num_upsampling_layers [%s] not recognized' %
                              opt.num_upsampling_layers)

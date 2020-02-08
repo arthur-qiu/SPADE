@@ -123,8 +123,7 @@ class Pix2PixModel(torch.nn.Module):
             input_label = self.FloatTensor(bs, nc, h, w).zero_()
             input_semantics = input_label.scatter_(1, label_map, 1.0)
         else:
-            input_semantics = label_map
-        print(torch.max(input_semantics),torch.min(input_semantics))
+            input_semantics = label_map.float()
 
         # concatenate instance map if it exists
         if not self.opt.no_instance:

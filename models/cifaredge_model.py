@@ -7,6 +7,8 @@ import torch
 import models.networks as networks
 import util.util as util
 
+print(2)
+
 
 class CifarEdgeModel(torch.nn.Module):
     @staticmethod

@@ -47,7 +47,7 @@ class ConvEncoder(BaseNetwork):
         if self.opt.crop_size >= 256:
             x = self.layer6(self.actvn(x))
         x = self.actvn(x)
-        print(x)
+        print(x.shape)
         x = x.view(x.size(0), -1)
         mu = self.fc_mu(x)
         logvar = self.fc_var(x)

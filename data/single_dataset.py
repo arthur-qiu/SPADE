@@ -52,11 +52,9 @@ class SingleDataset(BaseDataset):
         transform_image = get_transform(self.opt, params)
         image_tensor = transform_image(image)
 
-        print(image_tensor.shape)
-        exit()
-        label_tensor = forward_canny.get_edge(image_tensor, self.opt.sigma, self.opt.high_threshold, self.opt.low_threshold, self.opt.robust_threshold)
+        label_tensor = forward_canny.get_edge(image_tensor.unsqueeze(0), self.opt.sigma, self.opt.high_threshold, self.opt.low_threshold, self.opt.robust_threshold)
 
-        input_dict = {'label': label_tensor,
+        input_dict = {'label': label_tensor[0],
                       'image': image_tensor,
                       'path': image_path,
                       }

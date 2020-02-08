@@ -7,7 +7,7 @@ from data.single_dataset import SingleDataset
 from data.image_folder import make_dataset
 
 
-class CustomDataset(SingleDataset):
+class CifarDataset(SingleDataset):
     """ Dataset that loads images from directories
         Use option --label_dir, --image_dir, --instance_dir to specify the directories.
         The images in the directories are sorted in alphabetical order and paired in order.

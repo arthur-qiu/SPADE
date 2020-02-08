@@ -57,6 +57,7 @@ class SingleDataset(BaseDataset):
         input_dict = {'label': label_tensor[0],
                       'image': image_tensor,
                       'path': image_path,
+                      'instance': 0,
                       }
 
         # Give subclasses a chance to modify the final output

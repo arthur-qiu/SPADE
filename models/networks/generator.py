@@ -116,7 +116,7 @@ class SPADEGenerator(BaseNetwork):
 
         x = self.conv_img(F.leaky_relu(x, 2e-1))
         x = F.tanh(x)
-
+        print("!!!", x.shape)
         return x
 
 

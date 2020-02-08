@@ -7,8 +7,6 @@ import torch
 import models.networks as networks
 import util.util as util
 
-print(2)
-
 
 class CifarEdgeModel(torch.nn.Module):
     @staticmethod
@@ -92,7 +90,9 @@ class CifarEdgeModel(torch.nn.Module):
 
     def initialize_networks(self, opt):
         # netG = networks.define_G(opt)
+        print(3)
         netG = networks.define_lessG(opt)
+        print(4)
         netD = networks.define_D(opt) if opt.isTrain else None
         netE = networks.define_E(opt) if opt.use_vae else None
 

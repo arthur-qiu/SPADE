@@ -467,29 +467,49 @@ class CifarEdgeSPADEGenerator(BaseNetwork):
 
         self.sw, self.sh = self.compute_latent_vector_size(opt)
 
-        if opt.use_vae:
-            # In case of VAE, we will sample from random z vector
-            self.fc = nn.Linear(opt.z_dim, 16 * nf * self.sw * self.sh)
+        if self.opt.num_upsampling_layers == 'less':
+            if opt.use_vae:
+                # In case of VAE, we will sample from random z vector
+                self.fc = nn.Linear(opt.z_dim, 8 * nf * self.sw * self.sh)
+            else:
+                # Otherwise, we make the network deterministic by starting with
+                # downsampled segmentation map instead of random z
+                self.fc = nn.Conv2d(self.opt.semantic_nc, 8 * nf, 3, padding=1)
+
+            self.head_0 = SPADEResnetBlock(8 * nf, 8 * nf, opt)
+
+            self.G_middle_0 = SPADEResnetBlock(8 * nf, 8 * nf, opt)
+            self.G_middle_1 = SPADEResnetBlock(8 * nf, 4 * nf, opt)
+
+            self.up_0 = SPADEResnetBlock(4 * nf, 2 * nf, opt)
+            self.up_1 = SPADEResnetBlock(2 * nf, 1 * nf, opt)
+
+            final_nc = nf
+
         else:
-            # Otherwise, we make the network deterministic by starting with
-            # downsampled segmentation map instead of random z
-            self.fc = nn.Conv2d(self.opt.semantic_nc, 16 * nf, 3, padding=1)
+            if opt.use_vae:
+                # In case of VAE, we will sample from random z vector
+                self.fc = nn.Linear(opt.z_dim, 16 * nf * self.sw * self.sh)
+            else:
+                # Otherwise, we make the network deterministic by starting with
+                # downsampled segmentation map instead of random z
+                self.fc = nn.Conv2d(self.opt.semantic_nc, 16 * nf, 3, padding=1)
 
-        self.head_0 = SPADEResnetBlock(16 * nf, 16 * nf, opt)
+            self.head_0 = SPADEResnetBlock(16 * nf, 16 * nf, opt)
 
-        self.G_middle_0 = SPADEResnetBlock(16 * nf, 16 * nf, opt)
-        self.G_middle_1 = SPADEResnetBlock(16 * nf, 16 * nf, opt)
+            self.G_middle_0 = SPADEResnetBlock(16 * nf, 16 * nf, opt)
+            self.G_middle_1 = SPADEResnetBlock(16 * nf, 16 * nf, opt)
 
-        self.up_0 = SPADEResnetBlock(16 * nf, 8 * nf, opt)
-        self.up_1 = SPADEResnetBlock(8 * nf, 4 * nf, opt)
-        self.up_2 = SPADEResnetBlock(4 * nf, 2 * nf, opt)
-        self.up_3 = SPADEResnetBlock(2 * nf, 1 * nf, opt)
+            self.up_0 = SPADEResnetBlock(16 * nf, 8 * nf, opt)
+            self.up_1 = SPADEResnetBlock(8 * nf, 4 * nf, opt)
+            self.up_2 = SPADEResnetBlock(4 * nf, 2 * nf, opt)
+            self.up_3 = SPADEResnetBlock(2 * nf, 1 * nf, opt)
 
-        final_nc = nf
+            final_nc = nf
 
-        if opt.num_upsampling_layers == 'most':
-            self.up_4 = SPADEResnetBlock(1 * nf, nf // 2, opt)
-            final_nc = nf // 2
+            if opt.num_upsampling_layers == 'most':
+                self.up_4 = SPADEResnetBlock(1 * nf, nf // 2, opt)
+                final_nc = nf // 2
 
         self.conv_img = nn.Conv2d(final_nc, 3, 3, padding=1)
 

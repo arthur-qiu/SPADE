@@ -544,7 +544,7 @@ class CifarEdgeSPADEGenerator(BaseNetwork):
                 z = torch.randn(input.size(0), self.opt.z_dim,
                                 dtype=torch.float32, device=input.get_device())
             x = self.fc(z)
-            x = x.view(-1, 16 * self.opt.ngf, self.sh, self.sw)
+            x = x.view(-1, 8 * self.opt.ngf, self.sh, self.sw)
         else:
             # we downsample segmap and run convolution
             x = F.interpolate(seg, size=(self.sh, self.sw))

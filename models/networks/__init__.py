@@ -7,7 +7,7 @@ import torch
 from models.networks.base_network import BaseNetwork
 from models.networks.loss import *
 from models.networks.discriminator import *
-from models.networks.generator import *
+# from models.networks.generator import *
 from models.networks.small_generator import *
 from models.networks.encoder import *
 import util.util as util

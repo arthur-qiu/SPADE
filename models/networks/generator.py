@@ -88,7 +88,6 @@ class SPADEGenerator(BaseNetwork):
         else:
             # we downsample segmap and run convolution
             x = F.interpolate(seg, size=(self.sh, self.sw))
-            print(x.shape)
             x = self.fc(x)
 
         x = self.head_0(x, seg)

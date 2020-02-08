@@ -11,6 +11,7 @@ from models.networks.normalization import get_nonspade_norm_layer
 from models.networks.architecture import ResnetBlock as ResnetBlock
 from models.networks.architecture import SPADEResnetBlock as SPADEResnetBlock
 
+print(1)
 
 class SPADEGenerator(BaseNetwork):
     @staticmethod

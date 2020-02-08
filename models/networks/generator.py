@@ -537,7 +537,6 @@ class CifarEdgeSPADEGenerator(BaseNetwork):
 
     def forward(self, input, z=None):
         seg = input
-        print(torch.max(seg),torch.min(seg))
 
         if self.opt.use_vae:
             # we sample z from unit normal and reshape the tensor

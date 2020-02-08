@@ -8,6 +8,7 @@ from models.networks.base_network import BaseNetwork
 from models.networks.loss import *
 from models.networks.discriminator import *
 from models.networks.generator import *
+from models.networks.small_generator import *
 from models.networks.encoder import *
 import util.util as util
 
@@ -27,6 +28,20 @@ def modify_commandline_options(parser, is_train):
     opt, _ = parser.parse_known_args()
 
     netG_cls = find_network_using_name(opt.netG, 'generator')
+    parser = netG_cls.modify_commandline_options(parser, is_train)
+    if is_train:
+        netD_cls = find_network_using_name(opt.netD, 'discriminator')
+        parser = netD_cls.modify_commandline_options(parser, is_train)
+    netE_cls = find_network_using_name('conv', 'encoder')
+    parser = netE_cls.modify_commandline_options(parser, is_train)
+
+    return parser
+
+
+def modify_commandline_options_smallG(parser, is_train):
+    opt, _ = parser.parse_known_args()
+
+    netG_cls = find_network_using_name(opt.netG, 'small_generator')
     parser = netG_cls.modify_commandline_options(parser, is_train)
     if is_train:
         netD_cls = find_network_using_name(opt.netD, 'discriminator')

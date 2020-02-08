@@ -17,7 +17,7 @@ class SPADEGenerator(BaseNetwork):
     def modify_commandline_options(parser, is_train):
         parser.set_defaults(norm_G='spectralspadesyncbatch3x3')
         parser.add_argument('--num_upsampling_layers',
-                            choices=('normal', 'more', 'most', 'less'), default='normal',
+                            choices=('normal', 'more', 'most'), default='normal',
                             help="If 'more', adds upsampling layer between the two middle resnet blocks. If 'most', also add one more upsampling + resnet layer at the end of the generator")
 
         return parser
@@ -64,8 +64,6 @@ class SPADEGenerator(BaseNetwork):
             num_up_layers = 6
         elif opt.num_upsampling_layers == 'most':
             num_up_layers = 7
-        elif opt.num_upsampling_layers == 'less':
-            num_up_layers = 3
         else:
             raise ValueError('opt.num_upsampling_layers [%s] not recognized' %
                              opt.num_upsampling_layers)
@@ -116,7 +114,7 @@ class SPADEGenerator(BaseNetwork):
 
         x = self.conv_img(F.leaky_relu(x, 2e-1))
         x = F.tanh(x)
-        print("!!!", x.shape)
+
         return x
 
 
@@ -125,7 +123,7 @@ class LABELSPADEGenerator(BaseNetwork):
     def modify_commandline_options(parser, is_train):
         parser.set_defaults(norm_G='spectralspadesyncbatch3x3')
         parser.add_argument('--num_upsampling_layers',
-                            choices=('normal', 'more', 'most', 'less'), default='normal',
+                            choices=('normal', 'more', 'most'), default='normal',
                             help="If 'more', adds upsampling layer between the two middle resnet blocks. If 'most', also add one more upsampling + resnet layer at the end of the generator")
 
         return parser
@@ -172,8 +170,6 @@ class LABELSPADEGenerator(BaseNetwork):
             num_up_layers = 6
         elif opt.num_upsampling_layers == 'most':
             num_up_layers = 7
-        elif opt.num_upsampling_layers == 'less':
-            num_up_layers = 3
         else:
             raise ValueError('opt.num_upsampling_layers [%s] not recognized' %
                              opt.num_upsampling_layers)
@@ -281,7 +277,7 @@ class INTERPSPADEGenerator(BaseNetwork):
     def modify_commandline_options(parser, is_train):
         parser.set_defaults(norm_G='spectralspadesyncbatch3x3')
         parser.add_argument('--num_upsampling_layers',
-                            choices=('normal', 'more', 'most', 'less'), default='normal',
+                            choices=('normal', 'more', 'most'), default='normal',
                             help="If 'more', adds upsampling layer between the two middle resnet blocks. If 'most', also add one more upsampling + resnet layer at the end of the generator")
 
         return parser
@@ -330,8 +326,6 @@ class INTERPSPADEGenerator(BaseNetwork):
             num_up_layers = 6
         elif opt.num_upsampling_layers == 'most':
             num_up_layers = 7
-        elif opt.num_upsampling_layers == 'less':
-            num_up_layers = 3
         else:
             raise ValueError('opt.num_upsampling_layers [%s] not recognized' %
                              opt.num_upsampling_layers)

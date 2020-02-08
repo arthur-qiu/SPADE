@@ -61,3 +61,7 @@ def define_E(opt):
     # there exists only one encoder type
     netE_cls = find_network_using_name('conv', 'encoder')
     return create_network(netE_cls, opt)
+
+def define_lessG(opt):
+    netG_cls = find_network_using_name(opt.netG, 'small_generator')
+    return create_network(netG_cls, opt)

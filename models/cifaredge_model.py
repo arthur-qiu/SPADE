@@ -8,7 +8,7 @@ import models.networks as networks
 import util.util as util
 
 
-class Pix2PixModel(torch.nn.Module):
+class CifarEdgeModel(torch.nn.Module):
     @staticmethod
     def modify_commandline_options(parser, is_train):
         networks.modify_commandline_options(parser, is_train)
@@ -89,7 +89,8 @@ class Pix2PixModel(torch.nn.Module):
     ############################################################################
 
     def initialize_networks(self, opt):
-        netG = networks.define_G(opt)
+        # netG = networks.define_G(opt)
+        netG = networks.define_lessG(opt)
         netD = networks.define_D(opt) if opt.isTrain else None
         netE = networks.define_E(opt) if opt.use_vae else None
 
@@ -116,12 +117,14 @@ class Pix2PixModel(torch.nn.Module):
 
         # create one-hot label map
         label_map = data['label']
-        bs, _, h, w = label_map.size()
-        nc = self.opt.label_nc + 1 if self.opt.contain_dontcare_label \
-            else self.opt.label_nc
-        input_label = self.FloatTensor(bs, nc, h, w).zero_()
-        input_semantics = input_label.scatter_(1, label_map, 1.0)
-
+        if label_map.shape[1] > 1:
+            bs, _, h, w = label_map.size()
+            nc = self.opt.label_nc + 1 if self.opt.contain_dontcare_label \
+                else self.opt.label_nc
+            input_label = self.FloatTensor(bs, nc, h, w).zero_()
+            input_semantics = input_label.scatter_(1, label_map, 1.0)
+        else:
+            input_semantics = label_map.float()
 
         # concatenate instance map if it exists
         if not self.opt.no_instance:
@@ -205,6 +208,9 @@ class Pix2PixModel(torch.nn.Module):
     # for each fake and real image.
 
     def discriminate(self, input_semantics, fake_image, real_image):
+        print(input_semantics.shape)
+        print(fake_image.shape)
+        print(real_image.shape)
         fake_concat = torch.cat([input_semantics, fake_image], dim=1)
         real_concat = torch.cat([input_semantics, real_image], dim=1)
 

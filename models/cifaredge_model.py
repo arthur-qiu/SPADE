@@ -11,7 +11,7 @@ import util.util as util
 class CifarEdgeModel(torch.nn.Module):
     @staticmethod
     def modify_commandline_options(parser, is_train):
-        networks.modify_commandline_options_smallG(parser, is_train)
+        networks.modify_commandline_options(parser, is_train)
         return parser
 
     def __init__(self, opt):
@@ -89,8 +89,7 @@ class CifarEdgeModel(torch.nn.Module):
     ############################################################################
 
     def initialize_networks(self, opt):
-        # netG = networks.define_G(opt)
-        netG = networks.define_lessG(opt)
+        netG = networks.define_G(opt)
         netD = networks.define_D(opt) if opt.isTrain else None
         netE = networks.define_E(opt) if opt.use_vae else None
 

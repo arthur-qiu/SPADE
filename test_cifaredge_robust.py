@@ -15,6 +15,7 @@ from util import html
 import torch
 import torchvision.transforms as trn
 import torchvision.datasets as dset
+import torch.nn.functional as F
 from util import forward_canny
 from adv import pgd, wrn
 

@@ -51,7 +51,7 @@ class BaseOptions():
         parser.add_argument('--cache_filelist_read', action='store_true', help='reads from the file list cache')
 
         # for displays
-        parser.add_argument('--display_winsize', type=int, default=400, help='display window size')
+        parser.add_argument('--display_winsize', type=int, default=128, help='display window size')
 
         # for generator
         parser.add_argument('--netG', type=str, default='spade', help='selects model to use for netG (pix2pixhd | spade)')
@@ -66,6 +66,50 @@ class BaseOptions():
         parser.add_argument('--no_instance', action='store_true', help='if specified, do *not* add instance map as input')
         parser.add_argument('--nef', type=int, default=16, help='# of encoder filters in the first conv layer')
         parser.add_argument('--use_vae', action='store_true', help='enable training with an image encoder.')
+
+
+
+        parser.add_argument('--dataset', type=str, default='cifar10', choices=['cifar10', 'cifar100'],
+                            help='Choose between CIFAR-10, CIFAR-100.')
+        parser.add_argument('--cls_model', '-m', type=str, default='wrn',
+                            choices=['wrn'], help='Choose architecture.')
+        # Optimization options
+        parser.add_argument('--epochs', '-e', type=int, default=50, help='Number of epochs to train.')
+        parser.add_argument('--start_epoch', type=int, default=1, help='The start epoch to train. Design for restart.')
+        parser.add_argument('--learning_rate', '-lr', type=float, default=0.1, help='The initial learning rate.')
+        parser.add_argument('--batch_size', '-b', type=int, default=128, help='Batch size.')
+        parser.add_argument('--test_bs', type=int, default=128)
+        parser.add_argument('--momentum', type=float, default=0.9, help='Momentum.')
+        parser.add_argument('--decay', '-d', type=float, default=0.0005, help='Weight decay (L2 penalty).')
+        parser.add_argument('--epoch_step', default='[40,42,44,46,48]', type=str,
+                            help='json list with epochs to drop lr on')
+        parser.add_argument('--lr_decay_ratio', default=0.2, type=float)
+        # Checkpoints
+        parser.add_argument('--save', '-s', type=str, default='./logs/cifar10_adv', help='Folder to save checkpoints.')
+        parser.add_argument('--load', '-l', type=str, default='', help='Checkpoint path to resume / test.')
+        parser.add_argument('--test', '-t', action='store_true', help='Test only flag.')
+        # Acceleration
+        parser.add_argument('--ngpu', type=int, default=1, help='0 = CPU.')
+        parser.add_argument('--prefetch', type=int, default=1, help='Pre-fetching threads.')
+        # Adversarial setting
+        parser.add_argument('--epsilon', type=float, default=8 / 255,
+                            help='perturbation')
+        parser.add_argument('--num_steps', type=int, default=7,
+                            help='perturb number of steps')
+        parser.add_argument('--step_size', type=float, default=2 / 255,
+                            help='perturb step size')
+        parser.add_argument('--test_num_steps', type=int, default=20,
+                            help='test perturb number of steps')
+        parser.add_argument('--test_step_size', type=float, default=2 / 255,
+                            help='test perturb step size')
+
+        # Others
+        parser.add_argument('--random_seed', type=int, default=1)
+
+        # WRN Architecture
+        parser.add_argument('--layers', default=28, type=int, help='total number of layers')
+        parser.add_argument('--widen-factor', default=10, type=int, help='widen factor')
+        parser.add_argument('--droprate', default=0.0, type=float, help='dropout probability')
 
         self.initialized = True
         return parser

@@ -15,18 +15,10 @@ from util import html
 import torch
 import torchvision.transforms as trn
 import torchvision.datasets as dset
-from adv import option, pgd, wrn
+from util import forward_canny
+from adv import pgd, wrn
 
-class PrivateOptions(option.BaseOptions):
-    def initialize(self):
-        option.BaseOptions.initialize(self)
-
-        # WRN Architecture
-        self.parser.add_argument('--layers', default=28, type=int, help='total number of layers')
-        self.parser.add_argument('--widen-factor', default=10, type=int, help='widen factor')
-        self.parser.add_argument('--droprate', default=0.0, type=float, help='dropout probability')
-
-arg = PrivateOptions().parse()
+opt = TestOptions().parse()
 
 train_transform = trn.Compose([trn.RandomHorizontalFlip(), trn.RandomCrop(32, padding=4),
                                trn.ToTensor(), trn.Normalize(
@@ -34,36 +26,34 @@ train_transform = trn.Compose([trn.RandomHorizontalFlip(), trn.RandomCrop(32, pa
 test_transform = trn.Compose([trn.ToTensor(), trn.Normalize(
                                          mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])])
 
-if arg.dataset == 'cifar10':
-    train_data = dset.CIFAR10(arg.dataroot, train=True, transform=train_transform, download=True)
-    test_data = dset.CIFAR10(arg.dataroot, train=False, transform=test_transform)
+if opt.dataset == 'cifar10':
+    train_data = dset.CIFAR10(opt.dataroot, train=True, transform=train_transform, download=True)
+    test_data = dset.CIFAR10(opt.dataroot, train=False, transform=test_transform)
     num_classes = 10
 else:
-    train_data = dset.CIFAR100(arg.dataroot, train=True, transform=train_transform, download=True)
-    test_data = dset.CIFAR100(arg.dataroot, train=False, transform=test_transform)
+    train_data = dset.CIFAR100(opt.dataroot, train=True, transform=train_transform, download=True)
+    test_data = dset.CIFAR100(opt.dataroot, train=False, transform=test_transform)
     num_classes = 100
 
 train_loader = torch.utils.data.DataLoader(
-    train_data, batch_size=arg.batch_size, shuffle=True,
-    num_workers=arg.prefetch, pin_memory=torch.cuda.is_available())
+    train_data, batch_size=opt.batch_size, shuffle=True,
+    num_workers=opt.prefetch, pin_memory=torch.cuda.is_available())
 test_loader = torch.utils.data.DataLoader(
-    test_data, batch_size=arg.test_bs, shuffle=False,
-    num_workers=arg.prefetch, pin_memory=torch.cuda.is_available())
+    test_data, batch_size=opt.test_bs, shuffle=False,
+    num_workers=opt.prefetch, pin_memory=torch.cuda.is_available())
 
 # Create model
-if arg.model == 'wrn':
-    net = wrn.WideResNet(arg.layers, num_classes, arg.widen_factor, dropRate=arg.droprate)
+if opt.cls_model == 'wrn':
+    net = wrn.WideResNet(opt.layers, num_classes, opt.widen_factor, dropRate=opt.droprate)
 else:
-    assert False, arg.model + ' is not supported.'
+    assert False, opt.model + ' is not supported.'
 
-adversary_test = pgd.PGD(epsilon=arg.epsilon * 2, num_steps=arg.test_num_steps, step_size=arg.test_step_size * 2).cuda()
-
-opt = TestOptions().parse()
+adversary_test = pgd.PGD(epsilon=opt.epsilon * 2, num_steps=opt.test_num_steps, step_size=opt.test_step_size * 2).cuda()
 
 if len(opt.gpu_ids) > 0:
     net = torch.nn.DataParallel(net, device_ids=opt.gpu_ids)
     net.cuda()
-    torch.cuda.manual_seed(arg.random_seed)
+    torch.cuda.manual_seed(opt.random_seed)
 
 dataloader = data.create_dataloader(opt)
 
@@ -105,7 +95,7 @@ adv_correct = 0
 with torch.no_grad():
     for data, target in test_loader:
         data_i = {}
-        data_i['label'] = target
+        data_i['label'] = forward_canny.get_edge(data, opt.sigma, opt.high_threshold, opt.low_threshold, opt.robust_threshold)
         data_i['instance'] = torch.zeros(data.shape[0])
         data_i['image'] = data
         generated = model(data_i, mode='inference')

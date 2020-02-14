@@ -49,12 +49,27 @@ if opt.cls_model == 'wrn':
 else:
     assert False, opt.model + ' is not supported.'
 
-adversary_test = pgd.PGD(epsilon=opt.epsilon * 2, num_steps=opt.test_num_steps, step_size=opt.test_step_size * 2).cuda()
-
 if len(opt.gpu_ids) > 0:
     net = torch.nn.DataParallel(net, device_ids=opt.gpu_ids)
     net.cuda()
     torch.cuda.manual_seed(opt.random_seed)
+
+start_epoch = opt.start_epoch
+# Restore model if desired
+if opt.load != '':
+    if opt.test and os.path.isfile(opt.load):
+        net.load_state_dict(torch.load(opt.load))
+        print('Appointed Model Restored!')
+    else:
+        model_name = os.path.join(opt.load, opt.dataset + opt.model +
+                                  '_epoch_' + str(start_epoch) + '.pt')
+        if os.path.isfile(model_name):
+            net.load_state_dict(torch.load(model_name))
+            print('Model restored! Epoch:', start_epoch)
+        else:
+            raise Exception("Could not resume")
+
+adversary_test = pgd.PGD(epsilon=opt.epsilon * 2, num_steps=opt.test_num_steps, step_size=opt.test_step_size * 2).cuda()
 
 dataloader = data.create_dataloader(opt)
 
@@ -99,11 +114,11 @@ with torch.no_grad():
         data_i['label'] = forward_canny.get_edge(data, opt.sigma, opt.high_threshold, opt.low_threshold, opt.robust_threshold)
         data_i['instance'] = torch.zeros(data.shape[0])
         data_i['image'] = data
-        generated = model(data_i, mode='inference')
+        generated = model(data_i, mode='inference').detach()
 
         data, target = data.cuda(), target.cuda()
 
-        adv_data = adversary_test(net, data, target)
+        adv_data = adversary_test(net, generated, target)
 
         # forward
         output = net(data)

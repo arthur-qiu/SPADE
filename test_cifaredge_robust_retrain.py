@@ -13,31 +13,35 @@ from util.visualizer import Visualizer
 from util import html
 
 import torch
+import torch.nn as nn
 import torchvision.transforms as trn
 import torchvision.datasets as dset
 import torch.nn.functional as F
-from util import forward_canny
 from adv import pgd, wrn
 import json
 import time
+
+class TwoNets(nn.Module):
+    def __init__(self, net1, net2):
+        super(TwoNets, self).__init__()
+        self.net1 = net1
+        self.net2 = net2
+
+    def forward(self, x):
+        return self.net2(self.net1(x))
 
 def train():
     net.train()  # enter train mode
     loss_avg = 0.0
     for bx, by in train_loader:
         data_i = {}
-        data_i['label'] = forward_canny.get_edge(bx, opt.sigma, opt.high_threshold, opt.low_threshold,
-                                                 opt.robust_threshold)
-        data_i['instance'] = torch.zeros(bx.shape[0])
         data_i['image'] = bx
-        generated = model(data_i, mode='inference').detach()
+        generated = model(data_i, mode='edge_forward').detach()
 
         bx, by = bx.cuda(), by.cuda()
 
-        adv_bx = adversary_train(net, generated, by)
-
         # forward
-        logits = net(adv_bx)
+        logits = net(generated)
 
         # backward
         # scheduler.step()
@@ -54,23 +58,20 @@ def train():
 # test function
 def test():
     net.eval()
+    two_nets = TwoNets(model, net)
     loss_avg = 0.0
     correct = 0
     with torch.no_grad():
         for data, target in test_loader:
             data_i = {}
-            data_i['label'] = forward_canny.get_edge(data, opt.sigma, opt.high_threshold, opt.low_threshold,
-                                                     opt.robust_threshold)
-            data_i['instance'] = torch.zeros(data.shape[0])
             data_i['image'] = data
-            generated = model(data_i, mode='inference').detach()
 
             data, target = data.cuda(), target.cuda()
 
-            adv_data = adversary_test(net, generated, target)
+            adv_data = adversary_test(two_nets, data_i, target)
 
             # forward
-            output = net(adv_data)
+            output = two_nets(adv_data)
             loss = F.cross_entropy(output, target)
 
             # accuracy

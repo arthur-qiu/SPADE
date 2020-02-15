@@ -126,8 +126,7 @@ with torch.no_grad():
 
         data, target = data.cuda(), target.cuda()
 
-        adv_data = adversary_test(net, generated, target)
-        ## adv_data = adversary_test(two_nets, data_i, target)
+        adv_data = adversary_test(two_nets, data_i, target)
 
         # forward
         output = net(generated)
@@ -141,8 +140,7 @@ with torch.no_grad():
         loss_avg += float(loss.data)
 
         # forward
-        adv_output = net(adv_data)
-        ## adv_output = two_nets(adv_data)
+        adv_output = two_nets(adv_data)
         adv_loss = F.cross_entropy(adv_output, target)
 
         # accuracy

@@ -45,14 +45,14 @@ class CifarEdgeModel(torch.nn.Module):
     # routines based on |mode|.
     def forward(self, data, mode = "edge_back"):
         if mode == "edge_forward":
-            real_image = data['image'].cuda()
+            real_image = data.cuda()
             edge = forward_canny.get_edge(real_image, self.opt.sigma, self.opt.high_threshold, self.opt.low_threshold,
                                           self.opt.robust_threshold).detach()
             fake_image, _ = self.generate_fake(edge, real_image)
             return fake_image
 
         elif mode == "edge_back":
-            real_image = data['image'].cuda()
+            real_image = data.cuda()
             edge = self.canny_net(real_image)
             fake_image, _ = self.generate_fake(edge, real_image)
             return fake_image

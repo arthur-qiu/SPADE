@@ -34,9 +34,8 @@ def train():
     net.train()  # enter train mode
     loss_avg = 0.0
     for bx, by in train_loader:
-        data_i = {}
-        data_i['image'] = bx
-        generated = model(data_i, mode='edge_forward').detach()
+
+        generated = model(bx, mode='edge_forward').detach()
 
         bx, by = bx.cuda(), by.cuda()
 
@@ -63,12 +62,10 @@ def test():
     correct = 0
     with torch.no_grad():
         for data, target in test_loader:
-            data_i = {}
-            data_i['image'] = data
 
             data, target = data.cuda(), target.cuda()
 
-            adv_data = adversary_test(two_nets, data_i, target)
+            adv_data = adversary_test(two_nets, data, target)
 
             # forward
             output = two_nets(adv_data)

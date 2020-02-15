@@ -120,13 +120,12 @@ adv_loss_avg = 0.0
 adv_correct = 0
 with torch.no_grad():
     for data, target in test_loader:
-        data_i = {}
-        data_i['image'] = data
-        generated = model(data_i, mode='edge_forward').detach()
+
+        generated = model(data, mode='edge_forward').detach()
 
         data, target = data.cuda(), target.cuda()
 
-        adv_data = adversary_test(two_nets, data_i, target)
+        adv_data = adversary_test(two_nets, data, target)
 
         # forward
         output = net(generated)

@@ -6,6 +6,7 @@ Licensed under the CC BY-NC-SA 4.0 license (https://creativecommons.org/licenses
 import torch
 import models.networks as networks
 import util.util as util
+from util import forward_canny, backward_canny
 
 
 class CifarEdgeModel(torch.nn.Module):
@@ -24,6 +25,10 @@ class CifarEdgeModel(torch.nn.Module):
 
         self.netG, self.netD, self.netE = self.initialize_networks(opt)
 
+        self.canny_net = backward_canny.Canny_Net(opt.sigma, opt.high_threshold, opt.low_threshold, opt.robust_threshold)
+        if self.use_gpu():
+            self.canny_net.cuda()
+
         # set loss functions
         if opt.isTrain:
             self.criterionGAN = networks.GANLoss(
@@ -38,7 +43,20 @@ class CifarEdgeModel(torch.nn.Module):
     # of deep networks. We used this approach since DataParallel module
     # can't parallelize custom functions, we branch to different
     # routines based on |mode|.
-    def forward(self, data, mode):
+    def forward(self, data, mode = "edge_back"):
+        if mode == "edge_forward":
+            real_image = data['image'].cuda()
+            edge = forward_canny.get_edge(real_image, self.opt.sigma, self.opt.high_threshold, self.opt.low_threshold,
+                                          self.opt.robust_threshold).detach()
+            fake_image, _ = self.generate_fake(edge, real_image)
+            return fake_image
+
+        elif mode == "edge_back":
+            real_image = data['image'].cuda()
+            edge = self.canny_net(real_image)
+            fake_image, _ = self.generate_fake(edge, real_image)
+            return fake_image
+
         input_semantics, real_image = self.preprocess_input(data)
 
         if mode == 'generator':
@@ -253,3 +271,41 @@ class CifarEdgeModel(torch.nn.Module):
 
     def use_gpu(self):
         return len(self.opt.gpu_ids) > 0
+
+
+
+
+
+
+
+
+    # def bp_defense_z(self,input_semantics, z = None):
+    #     fake_image = self.netG(input_semantics, z=z)
+    #     return fake_image
+    #
+    # def bp_defense_z(self,input_semantics, real_image, mu, logvar):
+    #     fake_image = self.netG(input_semantics, z=z)
+    #     return fake_image
+    #
+    #
+    #
+    #
+    # def encode_z(self, real_image):
+    #     mu, logvar = self.netE(real_image)
+    #     z = self.reparameterize(mu, logvar)
+    #     return z, mu, logvar
+    #
+    # def generate_fake(self, input_semantics, real_image, compute_kld_loss=False):
+    #     z = None
+    #     KLD_loss = None
+    #     if self.opt.use_vae:
+    #         z, mu, logvar = self.encode_z(real_image)
+    #         if compute_kld_loss:
+    #             KLD_loss = self.KLDLoss(mu, logvar) * self.opt.lambda_kld
+    #
+    #     fake_image = self.netG(input_semantics, z=z)
+    #
+    #     assert (not compute_kld_loss) or self.opt.use_vae, \
+    #         "You cannot compute KLD loss if opt.use_vae == False"
+    #
+    #     return fake_image, KLD_loss

@@ -111,10 +111,8 @@ adv_correct = 0
 with torch.no_grad():
     for data, target in test_loader:
         data_i = {}
-        data_i['label'] = forward_canny.get_edge(data, opt.sigma, opt.high_threshold, opt.low_threshold, opt.robust_threshold)
-        data_i['instance'] = torch.zeros(data.shape[0])
         data_i['image'] = data
-        generated = model(data_i, mode='inference').detach()
+        generated = model(data_i, mode='edge_forward').detach()
 
         data, target = data.cuda(), target.cuda()
 

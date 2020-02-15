@@ -13,11 +13,20 @@ from util.visualizer import Visualizer
 from util import html
 
 import torch
+import torch.nn as nn
 import torchvision.transforms as trn
 import torchvision.datasets as dset
 import torch.nn.functional as F
-from util import forward_canny
 from adv import pgd, wrn
+
+class TwoNets(nn.Module):
+    def __init__(self, net1, net2):
+        super(TwoNets, self).__init__()
+        self.net1 = net1
+        self.net2 = net2
+
+    def forward(self, x):
+        return self.net2(self.net1(x))
 
 opt = TestOptions().parse()
 
@@ -104,6 +113,7 @@ model.eval()
 # robustness test
 
 net.eval()
+two_nets = TwoNets(model,net)
 loss_avg = 0.0
 correct = 0
 adv_loss_avg = 0.0
@@ -117,9 +127,10 @@ with torch.no_grad():
         data, target = data.cuda(), target.cuda()
 
         adv_data = adversary_test(net, generated, target)
+        ## adv_data = adversary_test(two_nets, data_i, target)
 
         # forward
-        output = net(data)
+        output = net(generated)
         loss = F.cross_entropy(output, target)
 
         # accuracy
@@ -131,6 +142,7 @@ with torch.no_grad():
 
         # forward
         adv_output = net(adv_data)
+        ## adv_output = two_nets(adv_data)
         adv_loss = F.cross_entropy(adv_output, target)
 
         # accuracy

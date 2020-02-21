@@ -364,20 +364,19 @@ class CifarEdgeModel(torch.nn.Module):
 
             z_hats_orig[idx] = z_hat.clone().cpu().detach()
 
-            loss = nn.MSELoss()
-            loss.requres_grad = True
-
             for iteration in range(rec_iter):
 
-                optimizer.zero_grad()
+                with torch.enable_grad():
 
-                fake_image = self.fw_defense_z(input_semantics, z_hat)
+                    optimizer.zero_grad()
 
-                reconstruct_loss = loss(fake_image, real_image)
+                    fake_image = self.fw_defense_z(input_semantics, z_hat)
 
-                reconstruct_loss.backward()
+                    reconstruct_loss = loss(fake_image, real_image)
 
-                optimizer.step()
+                    reconstruct_loss.backward()
+
+                    optimizer.step()
 
                 cur_lr = self.adjust_lr(optimizer, cur_lr, global_step=3, rec_iter=rec_iter)
 

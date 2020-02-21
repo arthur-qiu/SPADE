@@ -86,6 +86,9 @@ class CifarEdgeModel(torch.nn.Module):
         elif mode == 'bp_defense_z':
             fake_image = self.bp_defense_z(input_semantics, real_image)
             return fake_image
+        elif mode == 'bp_defense_eps':
+            fake_image = self.bp_defense_eps(input_semantics, real_image)
+            return fake_image
         else:
             raise ValueError("|mode| is invalid")
 
@@ -402,8 +405,61 @@ class CifarEdgeModel(torch.nn.Module):
 
 
 
-    def bp_defense_eps(self, input_semantics, real_image):
-        pass
+    def bp_defense_eps(self, input_semantics, real_image, lr = 0.01, rec_iter = 20, rec_restart = 1, input_latent = 32):
+
+        # the output of R random different initializations of z from L steps of GD
+        z_hats_recs = torch.Tensor(rec_restart, real_image.shape[0], input_latent)
+
+        # the R random differernt initializations of z before L steps of GD
+        z_hats_orig = torch.Tensor(rec_restart, real_image.shape[0], input_latent)
+
+        for idx in range(rec_restart):
+            z_hat = torch.randn(real_image.shape[0], input_latent).cuda()
+
+            z_hat = z_hat.detach().requires_grad_()
+            # input_semantics = input_semantics.detach().requires_grad_()
+
+            cur_lr = lr
+
+            optimizer = optim.SGD([z_hat], lr=cur_lr, momentum=0.7)
+
+            z_hats_orig[idx] = z_hat.clone().cpu().detach()
+
+            loss = nn.MSELoss()
+
+            for iteration in range(rec_iter):
+
+                with torch.enable_grad():
+
+                    optimizer.zero_grad()
+
+                    fake_image = self.fw_defense_eps(input_semantics, real_image, z_hat)
+
+                    reconstruct_loss = loss(fake_image, real_image)
+
+                    reconstruct_loss.backward()
+
+                    optimizer.step()
+
+                cur_lr = self.adjust_lr(optimizer, cur_lr, global_step=3, rec_iter=rec_iter)
+
+            z_hats_recs[idx] = z_hat.cpu().detach().clone()
+
+        reconstructions = torch.Tensor(rec_restart)
+
+        z_hats_recs = z_hats_recs.cuda()
+
+        for i in range(rec_restart):
+
+            fake_image = self.fw_defense_eps(input_semantics, real_image, z_hats_recs[i])
+
+            reconstructions[i] = loss(fake_image, real_image).cpu().item()
+
+        min_idx = torch.argmin(reconstructions)
+
+        final_out = self.fw_defense_eps(input_semantics, real_image, z_hats_recs[min_idx])
+
+        return final_out
 
 
     #TODO finish

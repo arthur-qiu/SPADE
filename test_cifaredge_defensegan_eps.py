@@ -150,7 +150,7 @@ with torch.no_grad():
                                           opt.robust_threshold).detach()
         adv_data_i['instance'] = torch.zeros(adv_data.shape[0])
         adv_data_i['image'] = adv_data
-        adv_generated = model(adv_data_i, mode='bp_defense_z').detach()
+        adv_generated = model(adv_data_i, mode='bp_defense_eps').detach()
         adv_output = net(adv_generated)
 
         adv_loss = F.cross_entropy(adv_output, target)

@@ -335,7 +335,7 @@ class CifarEdgeModel(torch.nn.Module):
         fake_image = self.netG(input_semantics, z=z)
         return fake_image
 
-    def adjust_lr(optimizer, cur_lr, decay_rate=0.1, global_step=1, rec_iter=200):
+    def adjust_lr(self, optimizer, cur_lr, decay_rate=0.1, global_step=1, rec_iter=200):
 
         lr = cur_lr * decay_rate ** (global_step / int(math.ceil(rec_iter * 0.8)))
 
@@ -383,8 +383,6 @@ class CifarEdgeModel(torch.nn.Module):
                 cur_lr = self.adjust_lr(optimizer, cur_lr, global_step=3, rec_iter=rec_iter)
 
             z_hats_recs[idx] = z_hat.cpu().detach().clone()
-
-
 
         reconstructions = torch.Tensor(rec_restart)
 

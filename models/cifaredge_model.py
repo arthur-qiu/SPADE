@@ -372,6 +372,7 @@ class CifarEdgeModel(torch.nn.Module):
                 fake_image = self.fw_defense_z(input_semantics, z_hat)
 
                 loss = nn.MSELoss()
+                loss.requres_grad = True
 
                 reconstruct_loss = loss(fake_image, real_image)
 

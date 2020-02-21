@@ -325,12 +325,10 @@ class CifarEdgeModel(torch.nn.Module):
 
 
     def fw_defense_z(self,input_semantics, z):
-        self.netG.cuda()
         fake_image = self.netG(input_semantics, z=z)
         return fake_image
 
     def fw_defense_eps(self,input_semantics, real_image, eps):
-        self.netG.cuda()
         mu, logvar = self.netE(real_image)
         std = torch.exp(0.5 * logvar)
         z = eps.mul(std) + mu
@@ -387,6 +385,8 @@ class CifarEdgeModel(torch.nn.Module):
             z_hats_recs[idx] = z_hat.cpu().detach().clone()
 
         reconstructions = torch.Tensor(rec_restart)
+
+        z_hats_recs = z_hats_recs.cuda()
 
         for i in range(rec_restart):
 

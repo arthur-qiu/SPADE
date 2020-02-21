@@ -375,6 +375,9 @@ class CifarEdgeModel(torch.nn.Module):
 
                 reconstruct_loss = loss(fake_image, real_image)
 
+                print(z_hat.requires_grad)
+                print(input_semantics.requires_grad)
+
                 reconstruct_loss.backward()
 
                 optimizer.step()
@@ -383,8 +386,7 @@ class CifarEdgeModel(torch.nn.Module):
 
             z_hats_recs[idx] = z_hat.cpu().detach().clone()
 
-            print(z_hat.requires_grad)
-            print(input_semantics.requires_grad)
+
 
         reconstructions = torch.Tensor(rec_restart)
 

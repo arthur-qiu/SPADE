@@ -347,7 +347,7 @@ class CifarEdgeModel(torch.nn.Module):
 
         return lr
 
-    def bp_defense_z(self, input_semantics, real_image, lr = 0.01, rec_iter = 200, rec_restart = 10, input_latent = 32):
+    def bp_defense_z(self, input_semantics, real_image, lr = 0.01, rec_iter = 20, rec_restart = 1, input_latent = 32):
 
         # the output of R random different initializations of z from L steps of GD
         z_hats_recs = torch.Tensor(rec_restart, real_image.shape[0], input_latent)

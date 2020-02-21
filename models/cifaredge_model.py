@@ -357,9 +357,8 @@ class CifarEdgeModel(torch.nn.Module):
             print(z_hat.requires_grad)
             print(input_semantics.requires_grad)
             z_hat = z_hat.detach().requires_grad_()
-            input_semantics = input_semantics.detach().requires_grad_()
-            print(z_hat.requires_grad)
-            print(input_semantics.requires_grad)
+            # input_semantics = input_semantics.detach().requires_grad_()
+
             cur_lr = lr
 
             optimizer = optim.SGD([z_hat], lr=cur_lr, momentum=0.7)
@@ -383,6 +382,9 @@ class CifarEdgeModel(torch.nn.Module):
                 cur_lr = self.adjust_lr(optimizer, cur_lr, global_step=3, rec_iter=rec_iter)
 
             z_hats_recs[idx] = z_hat.cpu().detach().clone()
+
+            print(z_hat.requires_grad)
+            print(input_semantics.requires_grad)
 
         reconstructions = torch.Tensor(rec_restart)
 

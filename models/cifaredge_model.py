@@ -354,8 +354,8 @@ class CifarEdgeModel(torch.nn.Module):
 
         for idx in range(rec_restart):
             z_hat = torch.randn(real_image.shape[0], input_latent).cuda()
-            z_hat = z_hat.detach().requires_grad_()
-
+            z_hat = z_hat.detach()
+            z_hat.requires_grad_()
             cur_lr = lr
 
             optimizer = optim.SGD([z_hat], lr=cur_lr, momentum=0.7)

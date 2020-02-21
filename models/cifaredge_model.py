@@ -364,6 +364,8 @@ class CifarEdgeModel(torch.nn.Module):
 
             z_hats_orig[idx] = z_hat.clone().cpu().detach()
 
+            loss = nn.MSELoss()
+
             for iteration in range(rec_iter):
 
                 with torch.enable_grad():

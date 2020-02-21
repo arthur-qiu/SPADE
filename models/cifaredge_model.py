@@ -4,9 +4,12 @@ Licensed under the CC BY-NC-SA 4.0 license (https://creativecommons.org/licenses
 """
 
 import torch
+import torch.nn as nn
 import models.networks as networks
 import util.util as util
 from util import forward_canny, backward_canny
+import math
+import torch.optim as optim
 
 
 class CifarEdgeModel(torch.nn.Module):
@@ -63,6 +66,12 @@ class CifarEdgeModel(torch.nn.Module):
             g_loss, generated = self.compute_generator_loss(
                 input_semantics, real_image)
             return g_loss, generated
+        elif mode == 'generator_cls':
+            cls_model = data['model'].cuda()
+            cls_label = data['class'].cuda()
+            g_loss, generated = self.compute_generator_loss_cls(
+                input_semantics, real_image, cls_model, cls_label)
+            return g_loss, generated
         elif mode == 'discriminator':
             d_loss = self.compute_discriminator_loss(
                 input_semantics, real_image)
@@ -73,6 +82,9 @@ class CifarEdgeModel(torch.nn.Module):
         elif mode == 'inference':
             with torch.no_grad():
                 fake_image, _ = self.generate_fake(input_semantics, real_image)
+            return fake_image
+        elif mode == 'bp_defense_z':
+            fake_image = self.bp_defense_z(input_semantics, real_image)
             return fake_image
         else:
             raise ValueError("|mode| is invalid")
@@ -272,40 +284,120 @@ class CifarEdgeModel(torch.nn.Module):
     def use_gpu(self):
         return len(self.opt.gpu_ids) > 0
 
+    def compute_generator_loss_cls(self, input_semantics, real_image, cls_model, cls_label):
+        G_losses = {}
+
+        fake_image, KLD_loss = self.generate_fake(
+            input_semantics, real_image, compute_kld_loss=self.opt.use_vae)
+
+        if self.opt.use_vae:
+            G_losses['KLD'] = KLD_loss
+
+        pred_fake, pred_real = self.discriminate(
+            input_semantics, fake_image, real_image)
+
+        G_losses['GAN'] = self.criterionGAN(pred_fake, True,
+                                            for_discriminator=False)
+
+        G_losses['CLS'] = torch.nn.functional.cross_entropy(cls_model(pred_fake),cls_label)
+
+        if not self.opt.no_ganFeat_loss:
+            num_D = len(pred_fake)
+            GAN_Feat_loss = self.FloatTensor(1).fill_(0)
+            for i in range(num_D):  # for each discriminator
+                # last output is the final prediction, so we exclude it
+                num_intermediate_outputs = len(pred_fake[i]) - 1
+                for j in range(num_intermediate_outputs):  # for each layer output
+                    unweighted_loss = self.criterionFeat(
+                        pred_fake[i][j], pred_real[i][j].detach())
+                    GAN_Feat_loss += unweighted_loss * self.opt.lambda_feat / num_D
+            G_losses['GAN_Feat'] = GAN_Feat_loss
+
+        if not self.opt.no_vgg_loss:
+            G_losses['VGG'] = self.criterionVGG(fake_image, real_image) \
+                * self.opt.lambda_vgg
+
+        return G_losses, fake_image
 
 
 
 
 
 
+    def fw_defense_z(self,input_semantics, z):
+        fake_image = self.netG(input_semantics, z=z)
+        return fake_image
 
-    # def bp_defense_z(self,input_semantics, z = None):
-    #     fake_image = self.netG(input_semantics, z=z)
-    #     return fake_image
-    #
-    # def bp_defense_z(self,input_semantics, real_image, mu, logvar):
-    #     fake_image = self.netG(input_semantics, z=z)
-    #     return fake_image
-    #
-    #
-    #
-    #
-    # def encode_z(self, real_image):
-    #     mu, logvar = self.netE(real_image)
-    #     z = self.reparameterize(mu, logvar)
-    #     return z, mu, logvar
-    #
-    # def generate_fake(self, input_semantics, real_image, compute_kld_loss=False):
-    #     z = None
-    #     KLD_loss = None
-    #     if self.opt.use_vae:
-    #         z, mu, logvar = self.encode_z(real_image)
-    #         if compute_kld_loss:
-    #             KLD_loss = self.KLDLoss(mu, logvar) * self.opt.lambda_kld
-    #
-    #     fake_image = self.netG(input_semantics, z=z)
-    #
-    #     assert (not compute_kld_loss) or self.opt.use_vae, \
-    #         "You cannot compute KLD loss if opt.use_vae == False"
-    #
-    #     return fake_image, KLD_loss
+    def fw_defense_eps(self,input_semantics, real_image, eps):
+        mu, logvar = self.netE(real_image)
+        std = torch.exp(0.5 * logvar)
+        z = eps.mul(std) + mu
+        fake_image = self.netG(input_semantics, z=z)
+        return fake_image
+
+    def adjust_lr(optimizer, cur_lr, decay_rate=0.1, global_step=1, rec_iter=200):
+
+        lr = cur_lr * decay_rate ** (global_step / int(math.ceil(rec_iter * 0.8)))
+
+        for param_group in optimizer.param_groups:
+            param_group['lr'] = lr
+
+        return lr
+
+    def bp_defense_z(self, input_semantics, real_image, lr = 0.01, rec_iter = 200, rec_restart = 10, input_latent = 32):
+
+        # the output of R random different initializations of z from L steps of GD
+        z_hats_recs = torch.Tensor(rec_restart, real_image.shape[0], input_latent)
+
+        # the R random differernt initializations of z before L steps of GD
+        z_hats_orig = torch.Tensor(rec_restart, real_image.shape[0], input_latent)
+
+        for idx in range(rec_restart):
+            z_hat = torch.randn(real_image.shape[0], input_latent).cuda()
+            z_hat = z_hat.detach().requires_grad_()
+
+            cur_lr = lr
+
+            optimizer = optim.SGD([z_hat], lr=cur_lr, momentum=0.7)
+
+            z_hats_orig[idx] = z_hat.cpu().detach().clone()
+
+            for iteration in range(rec_iter):
+
+                optimizer.zero_grad()
+
+                fake_image = self.fw_defense_z(input_semantics, z_hat)
+
+                loss = nn.MSELoss()
+
+                reconstruct_loss = loss(fake_image, real_image)
+
+                reconstruct_loss.backward()
+
+                optimizer.step()
+
+                cur_lr = self.adjust_lr(optimizer, cur_lr, global_step=3, rec_iter=rec_iter)
+
+            z_hats_recs[idx] = z_hat.cpu().detach().clone()
+
+        reconstructions = torch.Tensor(rec_restart)
+
+        for i in range(rec_restart):
+
+            fake_image = self.fw_defense_z(input_semantics, z_hats_recs[i])
+
+            reconstructions[i] = loss(fake_image, real_image).cpu().item()
+
+        min_idx = torch.argmin(reconstructions)
+
+        final_out = self.fw_defense_z(input_semantics, z_hats_recs[min_idx])
+
+        return final_out
+
+
+
+    def bp_defense_eps(self, input_semantics, real_image):
+        pass
+
+
+    #TODO finish

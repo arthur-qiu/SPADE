@@ -153,7 +153,7 @@ class Canny_Net(nn.Module):
         pts_plus = (isobel >= 0) & (jsobel >= 0) & (abs_isobel >= abs_jsobel)
         pts_minus = (isobel <= 0) & (jsobel <= 0) & (abs_isobel >= abs_jsobel)
         pts = pts_plus | pts_minus
-        pts = eroded_mask.bool() & pts
+        pts = eroded_mask & pts
         c1 = magnitude[:, :, 1:, :][pts[:, :, :-1, :]]
         c2 = magnitude[:, :, 1:, 1:][pts[:, :, :-1, :-1]]
         m = magnitude[pts]

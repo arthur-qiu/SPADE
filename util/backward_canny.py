@@ -128,8 +128,8 @@ class Canny_Net(nn.Module):
         abs_jsobel = torch.abs(jsobel)
         magnitude2 = isobel ** 2 + jsobel ** 2
         magnitude = torch.sqrt(magnitude2 + self.eps)
-        # self.TF = ThresholdF(self.thres)
-        # magnitude = self.TF(magnitude)
+        self.TF = ThresholdF(self.thres)
+        magnitude = self.TF(magnitude)
         # magnitude[magnitude < self.thres] = 0.
 
         # L186-L188

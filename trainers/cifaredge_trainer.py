@@ -49,7 +49,7 @@ class CifarEdgeTrainer():
             start_epoch = opt.start_epoch
             # Restore model if desired
             if opt.load != '':
-                if opt.test and os.path.isfile(opt.load):
+                if os.path.isfile(opt.load):
                     self.net.load_state_dict(torch.load(opt.load))
                     print('Appointed Model Restored!')
                 else:

@@ -302,6 +302,8 @@ class CifarEdgeModel(torch.nn.Module):
         G_losses['GAN'] = self.criterionGAN(pred_fake, True,
                                             for_discriminator=False)
 
+        print(cls_model(pred_fake))
+        print(cls_label)
         G_losses['CLS'] = torch.nn.functional.cross_entropy(cls_model(pred_fake),cls_label)
 
         if not self.opt.no_ganFeat_loss:

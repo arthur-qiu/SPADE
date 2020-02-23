@@ -58,32 +58,6 @@ iter_counter = IterationCounter(opt, len(train_loader))
 # create tool for visualization
 visualizer = Visualizer(opt)
 
-# Create model
-if opt.cls_model == 'wrn':
-    net = wrn.WideResNet(opt.layers, num_classes, opt.widen_factor, dropRate=opt.droprate)
-else:
-    assert False, opt.cls_model + ' is not supported.'
-
-if len(opt.gpu_ids) > 0:
-    net = torch.nn.DataParallel(net, device_ids=opt.gpu_ids)
-    net.cuda()
-    torch.cuda.manual_seed(opt.random_seed)
-
-start_epoch = opt.start_epoch
-# Restore model if desired
-if opt.load != '':
-    if opt.test and os.path.isfile(opt.load):
-        net.load_state_dict(torch.load(opt.load))
-        print('Appointed Model Restored!')
-    else:
-        model_name = os.path.join(opt.load, opt.dataset + opt.cls_model +
-                                  '_epoch_' + str(start_epoch) + '.pt')
-        if os.path.isfile(model_name):
-            net.load_state_dict(torch.load(model_name))
-            print('Model restored! Epoch:', start_epoch)
-        else:
-            raise Exception("Could not resume")
-
 for epoch in iter_counter.training_epochs():
     iter_counter.record_epoch_start(epoch)
     for i, data, target in enumerate(train_loader, start=iter_counter.epoch_iter):
@@ -94,7 +68,6 @@ for epoch in iter_counter.training_epochs():
         data_i['instance'] = torch.zeros(data.shape[0])
         data_i['image'] = data
         data_i['class'] = target
-        data_i['model'] = net
 
         # Training
         # train generator
@@ -132,5 +105,7 @@ for epoch in iter_counter.training_epochs():
               (epoch, iter_counter.total_steps_so_far))
         trainer.save('latest')
         trainer.save(epoch)
+
+    trainer.save_cls(epoch)
 
 print('Training was successfully finished.')

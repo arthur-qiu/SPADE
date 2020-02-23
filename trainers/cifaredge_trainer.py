@@ -5,6 +5,8 @@ Licensed under the CC BY-NC-SA 4.0 license (https://creativecommons.org/licenses
 
 from models.networks.sync_batchnorm import DataParallelWithCallback
 from models.cifaredge_model import CifarEdgeModel
+import torch
+import os
 
 
 class CifarEdgeTrainer():
@@ -29,6 +31,39 @@ class CifarEdgeTrainer():
             self.optimizer_G, self.optimizer_D = \
                 self.pix2pix_model_on_one_gpu.create_optimizers(opt)
             self.old_lr = opt.lr
+
+        if opt.cls:
+            from adv import pgd, wrn
+
+            # Create model
+            if opt.cls_model == 'wrn':
+                self.net = wrn.WideResNet(opt.layers, 10, opt.widen_factor, dropRate=opt.droprate)
+            else:
+                assert False, opt.cls_model + ' is not supported.'
+
+            if len(opt.gpu_ids) > 0:
+                self.net = torch.nn.DataParallel(self.net, device_ids=opt.gpu_ids)
+                self.net.cuda()
+                torch.cuda.manual_seed(opt.random_seed)
+
+            start_epoch = opt.start_epoch
+            # Restore model if desired
+            if opt.load != '':
+                if opt.test and os.path.isfile(opt.load):
+                    self.net.load_state_dict(torch.load(opt.load))
+                    print('Appointed Model Restored!')
+                else:
+                    model_name = os.path.join(opt.load, opt.dataset + opt.cls_model +
+                                              '_epoch_' + str(start_epoch) + '.pt')
+                    if os.path.isfile(model_name):
+                        self.net.load_state_dict(torch.load(model_name))
+                        print('Model restored! Epoch:', start_epoch)
+                    else:
+                        raise Exception("Could not resume")
+
+            self.optimizer_cls = torch.optim.SGD(
+                self.net.parameters(), opt.learning_rate, momentum=opt.momentum,
+                weight_decay=opt.decay, nesterov=True)
 
     def run_generator_one_step(self, data):
         self.optimizer_G.zero_grad()
@@ -86,10 +121,18 @@ class CifarEdgeTrainer():
             self.old_lr = new_lr
 
     def run_generator_one_step_cls(self, data):
+        data['model'] = self.net
+        self.optimizer_cls.zero_grad()
         self.optimizer_G.zero_grad()
         g_losses, generated = self.pix2pix_model(data, mode='generator_cls')
         g_loss = sum(g_losses.values()).mean()
         g_loss.backward()
+        self.optimizer_cls.step()
         self.optimizer_G.step()
         self.g_losses = g_losses
         self.generated = generated
+
+    def save_cls(self, epoch):
+        torch.save(self.net.state_dict(),
+                   os.path.join(self.opt.save, self.opt.dataset + self.opt.cls_model +
+                                '_epoch_' + str(epoch) + '.pt'))

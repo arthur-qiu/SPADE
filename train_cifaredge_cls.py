@@ -60,7 +60,7 @@ visualizer = Visualizer(opt)
 
 for epoch in iter_counter.training_epochs():
     iter_counter.record_epoch_start(epoch)
-    for i, data, target in enumerate(train_loader, start=iter_counter.epoch_iter):
+    for i, (data, target) in enumerate(train_loader, start=iter_counter.epoch_iter):
         iter_counter.record_one_iteration()
         data_i = {}
         data_i['label'] = forward_canny.get_edge(data, opt.sigma, opt.high_threshold, opt.low_threshold,

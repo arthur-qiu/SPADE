@@ -92,7 +92,7 @@ class Visualizer():
                             txts.append(label+str(i))
                             links.append(img_path)
                     else:
-                        img_path = 'epoch%.3_%s.png' % (n, label)
+                        img_path = 'epoch%.3d_%s.png' % (n, label)
                         ims.append(img_path)
                         txts.append(label)
                         links.append(img_path)

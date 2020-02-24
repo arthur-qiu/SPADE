@@ -39,6 +39,5 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--netD', type=str, default='multiscale', help='(n_layers|multiscale|image)')
         parser.add_argument('--no_TTUR', action='store_true', help='Use TTUR training scheme')
         parser.add_argument('--lambda_kld', type=float, default=0.05)
-        parser.add_argument('--cls', action='store_true', help='add cls to training process')
         self.isTrain = True
         return parser

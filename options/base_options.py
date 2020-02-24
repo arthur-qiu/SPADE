@@ -105,6 +105,7 @@ class BaseOptions():
 
         # Others
         parser.add_argument('--random_seed', type=int, default=1)
+        parser.add_argument('--cls', action='store_true', help='add cls to training process')
 
         # WRN Architecture
         parser.add_argument('--layers', default=28, type=int, help='total number of layers')

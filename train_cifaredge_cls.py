@@ -45,7 +45,7 @@ else:
 train_loader = torch.utils.data.DataLoader(
     train_data, batch_size=opt.batch_size, shuffle=True,
     num_workers=opt.prefetch, pin_memory=torch.cuda.is_available())
-test_loader = torch.utils.data.DataLoader(
+train_loader = torch.utils.data.DataLoader(
     test_data, batch_size=opt.test_bs, shuffle=False,
     num_workers=opt.prefetch, pin_memory=torch.cuda.is_available())
 

@@ -45,7 +45,7 @@ else:
 train_loader = torch.utils.data.DataLoader(
     train_data, batch_size=opt.batch_size, shuffle=True,
     num_workers=opt.prefetch, pin_memory=torch.cuda.is_available())
-train_loader = torch.utils.data.DataLoader(
+test_loader = torch.utils.data.DataLoader(
     test_data, batch_size=opt.test_bs, shuffle=False,
     num_workers=opt.prefetch, pin_memory=torch.cuda.is_available())
 
@@ -60,7 +60,6 @@ visualizer = Visualizer(opt)
 
 for epoch in iter_counter.training_epochs():
     iter_counter.record_epoch_start(epoch)
-    correct = 0
     for i, (data, target) in enumerate(train_loader, start=iter_counter.epoch_iter):
         iter_counter.record_one_iteration()
         data_i = {}
@@ -73,46 +72,40 @@ for epoch in iter_counter.training_epochs():
         # Training
         # train generator
         if i % opt.D_steps_per_G == 0:
-            result = trainer.run_generator_one_step_cls(data_i)
-            pred = result.data.max(1)[1]
-            correct += pred.eq(target.cuda().data).sum().item()
+            trainer.run_generator_one_step_cls(data_i)
 
+        # train discriminator
+        trainer.run_discriminator_one_step(data_i)
 
-    #     # train discriminator
-    #     trainer.run_discriminator_one_step(data_i)
-    #
-    #     # Visualizations
-    #     if iter_counter.needs_printing():
-    #         losses = trainer.get_latest_losses()
-    #         visualizer.print_current_errors(epoch, iter_counter.epoch_iter,
-    #                                         losses, iter_counter.time_per_iter)
-    #         visualizer.plot_current_errors(losses, iter_counter.total_steps_so_far)
-    #
-    #     if iter_counter.needs_displaying():
-    #         visuals = OrderedDict([('input_label', data_i['label']),
-    #                                ('synthesized_image', trainer.get_latest_generated()),
-    #                                ('real_image', data_i['image'])])
-    #         visualizer.display_current_results(visuals, epoch, iter_counter.total_steps_so_far)
-    #
-    #     if iter_counter.needs_saving():
-    #         print('saving the latest model (epoch %d, total_steps %d)' %
-    #               (epoch, iter_counter.total_steps_so_far))
-    #         trainer.save('latest')
-    #         iter_counter.record_current_iter()
-    #
-    # trainer.update_learning_rate(epoch)
-    # iter_counter.record_epoch_end()
+        # Visualizations
+        if iter_counter.needs_printing():
+            losses = trainer.get_latest_losses()
+            visualizer.print_current_errors(epoch, iter_counter.epoch_iter,
+                                            losses, iter_counter.time_per_iter)
+            visualizer.plot_current_errors(losses, iter_counter.total_steps_so_far)
 
-    print(correct)
-    exit()
+        if iter_counter.needs_displaying():
+            visuals = OrderedDict([('input_label', data_i['label']),
+                                   ('synthesized_image', trainer.get_latest_generated()),
+                                   ('real_image', data_i['image'])])
+            visualizer.display_current_results(visuals, epoch, iter_counter.total_steps_so_far)
 
-    # if epoch % opt.save_epoch_freq == 0 or \
-    #    epoch == iter_counter.total_epochs:
-    #     print('saving the model at the end of epoch %d, iters %d' %
-    #           (epoch, iter_counter.total_steps_so_far))
-    #     trainer.save('latest')
-    #     trainer.save(epoch)
-    #
-    # trainer.save_cls(epoch)
+        if iter_counter.needs_saving():
+            print('saving the latest model (epoch %d, total_steps %d)' %
+                  (epoch, iter_counter.total_steps_so_far))
+            trainer.save('latest')
+            iter_counter.record_current_iter()
+
+    trainer.update_learning_rate(epoch)
+    iter_counter.record_epoch_end()
+
+    if epoch % opt.save_epoch_freq == 0 or \
+       epoch == iter_counter.total_epochs:
+        print('saving the model at the end of epoch %d, iters %d' %
+              (epoch, iter_counter.total_steps_so_far))
+        trainer.save('latest')
+        trainer.save(epoch)
+
+    trainer.save_cls(epoch)
 
 print('Training was successfully finished.')

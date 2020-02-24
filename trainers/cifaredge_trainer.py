@@ -93,7 +93,6 @@ class CifarEdgeTrainer():
             self.old_lr = new_lr
 
     # def run_generator_one_step_cls(self, data):
-    #     data['model'] = self.net
     #     self.optimizer_cls.zero_grad()
     #     self.optimizer_G.zero_grad()
     #     g_losses, generated = self.pix2pix_model(data, mode='generator_cls')
@@ -105,17 +104,9 @@ class CifarEdgeTrainer():
     #     self.generated = generated
 
     def run_generator_one_step_cls(self, data):
-        data['model'] = self.net
-        # self.optimizer_cls.zero_grad()
-        # self.optimizer_G.zero_grad()
-        g_losses, generated = self.pix2pix_model(data, mode='generator_cls')
-        g_loss = sum(g_losses.values()).mean()
-        # g_loss.backward()
-        # self.optimizer_cls.step()
-        # self.optimizer_G.step()
-        self.g_losses = g_losses
-        self.generated = generated
-        out = self.net(generated)
+
+        out = self.pix2pix_model(data, mode='generator_cls')
+
         return out
 
     def save_cls(self, epoch):

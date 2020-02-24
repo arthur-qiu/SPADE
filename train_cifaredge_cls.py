@@ -60,6 +60,7 @@ visualizer = Visualizer(opt)
 
 for epoch in iter_counter.training_epochs():
     iter_counter.record_epoch_start(epoch)
+    correct = 0
     for i, (data, target) in enumerate(train_loader, start=iter_counter.epoch_iter):
         iter_counter.record_one_iteration()
         data_i = {}
@@ -72,7 +73,10 @@ for epoch in iter_counter.training_epochs():
         # Training
         # train generator
         if i % opt.D_steps_per_G == 0:
-            trainer.run_generator_one_step_cls(data_i)
+            result = trainer.run_generator_one_step_cls(data_i)
+            pred = result.data.max(1)[1]
+            correct += pred.eq(target.data).sum().item()
+
 
         # train discriminator
         trainer.run_discriminator_one_step(data_i)
@@ -107,5 +111,7 @@ for epoch in iter_counter.training_epochs():
         trainer.save(epoch)
 
     trainer.save_cls(epoch)
+    print(correct)
+    exit()
 
 print('Training was successfully finished.')

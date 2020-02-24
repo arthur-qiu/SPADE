@@ -14,9 +14,9 @@ import torch.optim as optim
 class IdentityMapping(nn.Module):
     def __init__(self, base):
         super(IdentityMapping, self).__init__()
-        self.base = base
+        self.module = base
     def forward(self, x):
-        x = self.base(x)
+        x = self.module(x)
         return x
 
 class CifarEdgeModel(torch.nn.Module):

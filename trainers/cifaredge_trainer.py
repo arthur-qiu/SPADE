@@ -42,7 +42,8 @@ class CifarEdgeTrainer():
                 assert False, opt.cls_model + ' is not supported.'
 
             if len(opt.gpu_ids) > 0:
-                self.net = torch.nn.DataParallel(self.net, device_ids=[6])
+                self.net = DataParallelWithCallback(self.net,
+                                                          device_ids=opt.gpu_ids)
                 self.net.cuda()
                 torch.cuda.manual_seed(opt.random_seed)
 

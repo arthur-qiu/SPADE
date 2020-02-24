@@ -75,7 +75,7 @@ for epoch in iter_counter.training_epochs():
         if i % opt.D_steps_per_G == 0:
             result = trainer.run_generator_one_step_cls(data_i)
             pred = result.data.max(1)[1]
-            correct += pred.eq(target.data).sum().item()
+            correct += pred.eq(target.cuda().data).sum().item()
 
 
         # train discriminator

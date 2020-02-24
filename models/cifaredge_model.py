@@ -105,9 +105,9 @@ class CifarEdgeModel(torch.nn.Module):
             return g_loss, generated
         elif mode == 'generator_cls':
             cls_label = data['class'].cuda()
-            g_loss, generated = self.compute_generator_loss_cls(
+            out = self.compute_generator_loss_cls(
                 input_semantics, real_image, self.net, cls_label)
-            return g_loss, generated
+            return out
         elif mode == 'discriminator':
             d_loss = self.compute_discriminator_loss(
                 input_semantics, real_image)

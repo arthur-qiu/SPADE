@@ -105,7 +105,7 @@ class CifarEdgeTrainer():
 
     def run_generator_one_step_cls(self, data):
 
-        out = self.pix2pix_model(data, mode='generator_cls')
+        loss, out = self.pix2pix_model(data, mode='generator_cls')
 
         return out
 

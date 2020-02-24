@@ -27,44 +27,15 @@ class CifarEdgeTrainer():
             self.pix2pix_model_on_one_gpu = self.pix2pix_model
 
         self.generated = None
-        if opt.isTrain:
+        if opt.cls:
+            self.optimizer_G, self.optimizer_D, self.optimizer_cls = \
+                self.pix2pix_model_on_one_gpu.create_optimizers(opt)
+            self.old_lr = opt.lr
+        elif opt.isTrain:
             self.optimizer_G, self.optimizer_D = \
                 self.pix2pix_model_on_one_gpu.create_optimizers(opt)
             self.old_lr = opt.lr
 
-        if opt.cls:
-            from adv import pgd, wrn
-
-            # Create model
-            if opt.cls_model == 'wrn':
-                self.net = wrn.WideResNet(opt.layers, 10, opt.widen_factor, dropRate=opt.droprate)
-            else:
-                assert False, opt.cls_model + ' is not supported.'
-
-            if len(opt.gpu_ids) > 0:
-                self.net = DataParallelWithCallback(self.net,
-                                                          device_ids=opt.gpu_ids)
-                self.net.cuda()
-                torch.cuda.manual_seed(opt.random_seed)
-
-            start_epoch = opt.start_epoch
-            # Restore model if desired
-            if opt.load != '':
-                if os.path.isfile(opt.load):
-                    self.net.load_state_dict(torch.load(opt.load))
-                    print('Appointed Model Restored!')
-                else:
-                    model_name = os.path.join(opt.load, opt.dataset + opt.cls_model +
-                                              '_epoch_' + str(start_epoch) + '.pt')
-                    if os.path.isfile(model_name):
-                        self.net.load_state_dict(torch.load(model_name))
-                        print('Model restored! Epoch:', start_epoch)
-                    else:
-                        raise Exception("Could not resume")
-
-            self.optimizer_cls = torch.optim.SGD(
-                self.net.parameters(), opt.learning_rate, momentum=opt.momentum,
-                weight_decay=opt.decay, nesterov=True)
 
     def run_generator_one_step(self, data):
         self.optimizer_G.zero_grad()

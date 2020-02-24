@@ -42,6 +42,32 @@ class CifarEdgeModel(torch.nn.Module):
             if opt.use_vae:
                 self.KLDLoss = networks.KLDLoss()
 
+        if opt.cls:
+            from adv import pgd, wrn
+            import os
+
+            # Create model
+            if opt.cls_model == 'wrn':
+                self.net = wrn.WideResNet(opt.layers, 10, opt.widen_factor, dropRate=opt.droprate)
+            else:
+                assert False, opt.cls_model + ' is not supported.'
+
+            start_epoch = opt.start_epoch
+            # Restore model if desired
+            if opt.load != '':
+                if os.path.isfile(opt.load):
+                    self.net.load_state_dict(torch.load(opt.load))
+                    print('Appointed Model Restored!')
+                else:
+                    model_name = os.path.join(opt.load, opt.dataset + opt.cls_model +
+                                              '_epoch_' + str(start_epoch) + '.pt')
+                    if os.path.isfile(model_name):
+                        self.net.load_state_dict(torch.load(model_name))
+                        print('Model restored! Epoch:', start_epoch)
+                    else:
+                        raise Exception("Could not resume")
+
+
     # Entry point for all calls involving forward pass
     # of deep networks. We used this approach since DataParallel module
     # can't parallelize custom functions, we branch to different
@@ -108,6 +134,12 @@ class CifarEdgeModel(torch.nn.Module):
 
         optimizer_G = torch.optim.Adam(G_params, lr=G_lr, betas=(beta1, beta2))
         optimizer_D = torch.optim.Adam(D_params, lr=D_lr, betas=(beta1, beta2))
+
+        if opt.cls:
+            self.optimizer_cls = torch.optim.SGD(
+                self.net.parameters(), opt.learning_rate, momentum=opt.momentum,
+                weight_decay=opt.decay, nesterov=True)
+            return optimizer_G, optimizer_D, self.optimizer_cls
 
         return optimizer_G, optimizer_D
 
@@ -302,7 +334,7 @@ class CifarEdgeModel(torch.nn.Module):
         G_losses['GAN'] = self.criterionGAN(pred_fake, True,
                                             for_discriminator=False)
 
-        # G_losses['CLS'] = torch.nn.functional.cross_entropy(cls_model(fake_image),cls_label) * 10
+        G_losses['CLS'] = torch.nn.functional.cross_entropy(cls_model(fake_image),cls_label) * 10
 
         if not self.opt.no_ganFeat_loss:
             num_D = len(pred_fake)

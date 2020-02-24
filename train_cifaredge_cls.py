@@ -106,6 +106,6 @@ for epoch in iter_counter.training_epochs():
         trainer.save('latest')
         trainer.save(epoch)
 
-    trainer.save_cls(epoch)
+    # trainer.save_cls(epoch)
 
 print('Training was successfully finished.')

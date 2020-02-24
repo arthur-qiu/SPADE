@@ -56,13 +56,13 @@ class CifarEdgeModel(torch.nn.Module):
             # Restore model if desired
             if opt.load != '':
                 if os.path.isfile(opt.load):
-                    self.net.load_state_dict(torch.load(opt.load))
+                    self.net.load_state_dict(torch.load(opt.load)['module'])
                     print('Appointed Model Restored!')
                 else:
                     model_name = os.path.join(opt.load, opt.dataset + opt.cls_model +
                                               '_epoch_' + str(start_epoch) + '.pt')
                     if os.path.isfile(model_name):
-                        self.net.load_state_dict(torch.load(model_name))
+                        self.net.load_state_dict(torch.load(model_name)['module'])
                         print('Model restored! Epoch:', start_epoch)
                     else:
                         raise Exception("Could not resume")

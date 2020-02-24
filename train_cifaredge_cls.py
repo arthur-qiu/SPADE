@@ -103,6 +103,9 @@ for epoch in iter_counter.training_epochs():
     trainer.update_learning_rate(epoch)
     iter_counter.record_epoch_end()
 
+    print(correct)
+    exit()
+
     if epoch % opt.save_epoch_freq == 0 or \
        epoch == iter_counter.total_epochs:
         print('saving the model at the end of epoch %d, iters %d' %
@@ -111,7 +114,5 @@ for epoch in iter_counter.training_epochs():
         trainer.save(epoch)
 
     trainer.save_cls(epoch)
-    print(correct)
-    exit()
 
 print('Training was successfully finished.')

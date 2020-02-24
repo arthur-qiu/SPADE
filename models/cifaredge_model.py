@@ -10,6 +10,7 @@ import util.util as util
 from util import forward_canny, backward_canny
 import math
 import torch.optim as optim
+import os
 
 class IdentityMapping(nn.Module):
     def __init__(self, base):
@@ -51,7 +52,6 @@ class CifarEdgeModel(torch.nn.Module):
 
         if opt.cls:
             from adv import pgd, wrn
-            import os
 
             # Create model
             if opt.cls_model == 'wrn':
@@ -71,10 +71,10 @@ class CifarEdgeModel(torch.nn.Module):
                     print('Appointed Model Restored!')
                 else:
                     model_name = os.path.join(opt.load, opt.dataset + opt.cls_model +
-                                              '_epoch_' + str(start_epoch) + '.pt')
+                                              '_epoch_' + str(opt.start_epoch) + '.pt')
                     if os.path.isfile(model_name):
                         self.net.load_state_dict(torch.load(model_name))
-                        print('Model restored! Epoch:', start_epoch)
+                        print('Model restored! Epoch:', opt.start_epoch)
                     else:
                         raise Exception("Could not resume")
 
@@ -158,6 +158,11 @@ class CifarEdgeModel(torch.nn.Module):
         util.save_network(self.netD, 'D', epoch, self.opt)
         if self.opt.use_vae:
             util.save_network(self.netE, 'E', epoch, self.opt)
+
+        if self.opt.cls:
+            torch.save(self.net.state_dict(),
+                       os.path.join(self.opt.save, self.opt.dataset + self.opt.cls_model +
+                                    '_epoch_' + str(epoch) + '.pt'))
 
     ############################################################################
     # Private helper methods

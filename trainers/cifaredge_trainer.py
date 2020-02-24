@@ -109,7 +109,7 @@ class CifarEdgeTrainer():
     #
     #     return out
 
-    def save_cls(self, epoch):
-        torch.save(self.net.state_dict(),
-                   os.path.join(self.opt.save, self.opt.dataset + self.opt.cls_model +
-                                '_epoch_' + str(epoch) + '.pt'))
+    # def save_cls(self, epoch):
+    #     torch.save(self.net.state_dict(),
+    #                os.path.join(self.opt.save, self.opt.dataset + self.opt.cls_model +
+    #                             '_epoch_' + str(epoch) + '.pt'))

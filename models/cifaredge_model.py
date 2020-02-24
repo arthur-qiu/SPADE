@@ -362,8 +362,7 @@ class CifarEdgeModel(torch.nn.Module):
             G_losses['VGG'] = self.criterionVGG(fake_image, real_image) \
                 * self.opt.lambda_vgg
 
-        # return G_losses, fake_image
-        return G_losses, cls_model(fake_image)
+        return G_losses, fake_image
 
 
 

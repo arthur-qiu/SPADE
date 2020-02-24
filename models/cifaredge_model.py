@@ -59,7 +59,10 @@ class CifarEdgeModel(torch.nn.Module):
             else:
                 assert False, opt.cls_model + ' is not supported.'
 
-            start_epoch = opt.start_epoch
+            if len(opt.gpu_ids) > 0:
+                assert (torch.cuda.is_available())
+                self.net.cuda()
+
             # Restore model if desired
             if opt.load != '':
                 self.net = IdentityMapping(self.net)

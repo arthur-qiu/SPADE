@@ -321,11 +321,7 @@ class CifarEdgeModel(torch.nn.Module):
             if compute_kld_loss:
                 KLD_loss = self.KLDLoss(mu, logvar) * self.opt.lambda_kld
 
-        print(input_semantics.shape)
-        print(z.shape)
-        exit()
-
-        fake_image = self.netG(input_semantics, z=z)
+        fake_image = self.netG(input_semantics, real_image, z=z)
 
         assert (not compute_kld_loss) or self.opt.use_vae, \
             "You cannot compute KLD loss if opt.use_vae == False"

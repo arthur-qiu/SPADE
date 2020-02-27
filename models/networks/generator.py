@@ -685,9 +685,7 @@ class CifarCombEdgeSPADEGenerator(BaseNetwork):
             comb_map = x.view(-1, 8, self.sh * int(self.opt.ngf ** 0.5), self.sw * int(self.opt.ngf ** 0.5))
             grey_real = torch.sum(real_img, 1, keepdim=True) / 3
             coef_map = torch.sum(comb_map, 1, keepdim=True) / 8
-            seg = torch.cat([input, grey_real * coef_map], 0)
-            print(x.shape)
-            print(seg.shape)
+            seg = torch.cat([input, grey_real * coef_map], 1)
 
         else:
             # we downsample segmap and run convolution

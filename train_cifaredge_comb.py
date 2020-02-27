@@ -40,7 +40,7 @@ for epoch in iter_counter.training_epochs():
             trainer.run_generator_one_step_comb(data_i)
 
         # train discriminator
-        trainer.run_discriminator_one_step(data_i)
+        trainer.run_discriminator_one_step_comb(data_i)
 
         # Visualizations
         if iter_counter.needs_printing():

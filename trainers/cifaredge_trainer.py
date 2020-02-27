@@ -112,6 +112,14 @@ class CifarEdgeTrainer():
         self.g_losses = g_losses
         self.generated = generated
 
+    def run_discriminator_one_step_cnnedge(self, data):
+        self.optimizer_D.zero_grad()
+        d_losses = self.pix2pix_model(data, mode='discriminator_cnnedge')
+        d_loss = sum(d_losses.values()).mean()
+        d_loss.backward()
+        self.optimizer_D.step()
+        self.d_losses = d_losses
+
     def run_generator_one_step_comb(self, data):
         self.optimizer_G.zero_grad()
         g_losses, generated = self.pix2pix_model(data, mode='generator_comb')

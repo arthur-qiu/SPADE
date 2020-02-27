@@ -142,7 +142,8 @@ class CifarEdgeModel(torch.nn.Module):
             d_loss = self.compute_discriminator_loss(
                 input_semantics, real_image)
             return d_loss
-        elif mode == 'discriminator_cls':
+        elif mode == 'discriminator_cnnedge':
+            input_semantics = self.edge_net(input_semantics)
             d_loss = self.compute_discriminator_loss(
                 input_semantics, real_image)
             return d_loss
@@ -285,23 +286,6 @@ class CifarEdgeModel(torch.nn.Module):
         return G_losses, fake_image
 
     def compute_discriminator_loss(self, input_semantics, real_image):
-        D_losses = {}
-        with torch.no_grad():
-            fake_image, _ = self.generate_fake(input_semantics, real_image)
-            fake_image = fake_image.detach()
-            fake_image.requires_grad_()
-
-        pred_fake, pred_real = self.discriminate(
-            input_semantics, fake_image, real_image)
-
-        D_losses['D_Fake'] = self.criterionGAN(pred_fake, False,
-                                               for_discriminator=True)
-        D_losses['D_real'] = self.criterionGAN(pred_real, True,
-                                               for_discriminator=True)
-
-        return D_losses
-
-    def compute_discriminator_loss_cls(self, input_semantics, real_image):
         D_losses = {}
         with torch.no_grad():
             fake_image, _ = self.generate_fake(input_semantics, real_image)

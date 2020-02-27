@@ -687,7 +687,7 @@ class CifarCombEdgeSPADEGenerator(BaseNetwork):
             coef_map = torch.sum(comb_map, 1, keepdim=True) / 8
             if self.opt.sr > 0:
                 coef_map = nn.functional.interpolate(coef_map, scale_factor = 1/self.opt.sr, mode = 'nearest')
-                coef_map = nn.functional.interpolate(coef_map, scale_factor= 1/self.opt.sr, mode='nearest')
+                coef_map = nn.functional.interpolate(coef_map, scale_factor= self.opt.sr, mode='nearest')
             seg = torch.cat([input, grey_real * coef_map], 1)
 
         else:

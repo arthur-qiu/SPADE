@@ -108,6 +108,7 @@ class BaseOptions():
         parser.add_argument('--cls', action='store_true', help='add cls to training process')
         parser.add_argument('--cnn_edge', action='store_true', help='use cnn to extract edge')
         parser.add_argument('--comb', type=int, default= 0, help='additional info')
+        parser.add_argument('--sr', type=int, default=0, help='factor of down-sample and up-sample')
 
         # WRN Architecture
         parser.add_argument('--layers', default=28, type=int, help='total number of layers')

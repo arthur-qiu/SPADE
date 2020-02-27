@@ -106,6 +106,8 @@ class BaseOptions():
         # Others
         parser.add_argument('--random_seed', type=int, default=1)
         parser.add_argument('--cls', action='store_true', help='add cls to training process')
+        parser.add_argument('--cnn_edge', action='store_true', help='use cnn to extract edge')
+        parser.add_argument('--comb', type=int, default= 0, help='additional info')
 
         # WRN Architecture
         parser.add_argument('--layers', default=28, type=int, help='total number of layers')
@@ -204,7 +206,8 @@ class BaseOptions():
         # This will be convenient in many places
         opt.semantic_nc = opt.label_nc + \
             (1 if opt.contain_dontcare_label else 0) + \
-            (0 if opt.no_instance else 1)
+            (0 if opt.no_instance else 1) + \
+            opt.comb
 
         # set gpu ids
         str_ids = opt.gpu_ids.split(',')

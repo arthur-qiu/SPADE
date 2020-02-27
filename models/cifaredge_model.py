@@ -78,6 +78,27 @@ class CifarEdgeModel(torch.nn.Module):
                     else:
                         raise Exception("Could not resume")
 
+        if opt.cnn_edge:
+            from adv import zip_wrn
+            self.edge_net = zip_wrn.BlurZipNet()
+            if len(opt.gpu_ids) > 0:
+                assert (torch.cuda.is_available())
+                self.edge_net.cuda()
+
+            if opt.load != '':
+                self.edge_net = IdentityMapping(self.edge_net)
+                if os.path.isfile(opt.load):
+                    self.edge_net.load_state_dict(torch.load(opt.load))
+                    print('Appointed Model Restored!')
+                else:
+                    model_name = os.path.join(opt.load, opt.dataset + opt.cls_model +
+                                              '_epoch_' + str(opt.start_epoch) + '.pt')
+                    if os.path.isfile(model_name):
+                        self.edge_net.load_state_dict(torch.load(model_name))
+                        print('Model restored! Epoch:', opt.start_epoch)
+                    else:
+                        raise Exception("Could not resume")
+
 
     # Entry point for all calls involving forward pass
     # of deep networks. We used this approach since DataParallel module
@@ -100,6 +121,15 @@ class CifarEdgeModel(torch.nn.Module):
         input_semantics, real_image = self.preprocess_input(data)
 
         if mode == 'generator':
+            g_loss, generated = self.compute_generator_loss(
+                input_semantics, real_image)
+            return g_loss, generated
+        elif mode == 'generator_comb':
+            g_loss, generated = self.compute_generator_loss_comb(
+                input_semantics, real_image)
+            return g_loss, generated
+        elif mode == 'generator_cnnedge':
+            input_semantics = self.edge_net(input_semantics)
             g_loss, generated = self.compute_generator_loss(
                 input_semantics, real_image)
             return g_loss, generated
@@ -283,6 +313,25 @@ class CifarEdgeModel(torch.nn.Module):
 
         return fake_image, KLD_loss
 
+    def generate_fake_comb(self, input_semantics, real_image, compute_kld_loss=False):
+        z = None
+        KLD_loss = None
+        if self.opt.use_vae:
+            z, mu, logvar = self.encode_z(real_image)
+            if compute_kld_loss:
+                KLD_loss = self.KLDLoss(mu, logvar) * self.opt.lambda_kld
+
+        print(input_semantics.shape)
+        print(z.shape)
+        exit()
+
+        fake_image = self.netG(input_semantics, z=z)
+
+        assert (not compute_kld_loss) or self.opt.use_vae, \
+            "You cannot compute KLD loss if opt.use_vae == False"
+
+        return fake_image, KLD_loss
+
     # Given fake and real image, return the prediction of discriminator
     # for each fake and real image.
 
@@ -369,7 +418,38 @@ class CifarEdgeModel(torch.nn.Module):
 
         return G_losses, fake_image
 
+    def compute_generator_loss_comb(self, input_semantics, real_image):
+        G_losses = {}
 
+        fake_image, KLD_loss = self.generate_fake_comb(
+            input_semantics, real_image, compute_kld_loss=self.opt.use_vae)
+
+        if self.opt.use_vae:
+            G_losses['KLD'] = KLD_loss
+
+        pred_fake, pred_real = self.discriminate(
+            input_semantics, fake_image, real_image)
+
+        G_losses['GAN'] = self.criterionGAN(pred_fake, True,
+                                            for_discriminator=False)
+
+        if not self.opt.no_ganFeat_loss:
+            num_D = len(pred_fake)
+            GAN_Feat_loss = self.FloatTensor(1).fill_(0)
+            for i in range(num_D):  # for each discriminator
+                # last output is the final prediction, so we exclude it
+                num_intermediate_outputs = len(pred_fake[i]) - 1
+                for j in range(num_intermediate_outputs):  # for each layer output
+                    unweighted_loss = self.criterionFeat(
+                        pred_fake[i][j], pred_real[i][j].detach())
+                    GAN_Feat_loss += unweighted_loss * self.opt.lambda_feat / num_D
+            G_losses['GAN_Feat'] = GAN_Feat_loss
+
+        if not self.opt.no_vgg_loss:
+            G_losses['VGG'] = self.criterionVGG(fake_image, real_image) \
+                * self.opt.lambda_vgg
+
+        return G_losses, fake_image
 
 
 

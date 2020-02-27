@@ -682,6 +682,9 @@ class CifarCombEdgeSPADEGenerator(BaseNetwork):
                                 dtype=torch.float32, device=input.get_device())
             x = self.fc(z)
             x = x.view(-1, 8 * self.opt.ngf, self.sh, self.sw)
+            print(x)
+            print(torch.max(x),torch.min(x),torch.mean(x))
+            exit()
             comb_map = x.view(-1, 8, self.sh * int(self.opt.ngf ** 0.5), self.sw * int(self.opt.ngf ** 0.5))
             grey_real = torch.sum(real_img, 1, keepdim=True) / 3
             coef_map = torch.sum(comb_map, 1, keepdim=True) / 8

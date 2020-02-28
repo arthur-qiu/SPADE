@@ -109,13 +109,19 @@ class CifarEdgeModel(torch.nn.Module):
             real_image = data.cuda()
             edge = forward_canny.get_edge(real_image, self.opt.sigma, self.opt.high_threshold, self.opt.low_threshold,
                                           self.opt.robust_threshold).detach()
-            fake_image, _ = self.generate_fake(edge, real_image)
+            if self.opt.comb > 0:
+                fake_image, _ = self.generate_fake_comb(edge, real_image)
+            else:
+                fake_image, _ = self.generate_fake(edge, real_image)
             return fake_image
 
         elif mode == "edge_back":
             real_image = data.cuda()
             edge = self.canny_net(real_image)
-            fake_image, _ = self.generate_fake(edge, real_image)
+            if self.opt.comb > 0:
+                fake_image, _ = self.generate_fake_comb(edge, real_image)
+            else:
+                fake_image, _ = self.generate_fake(edge, real_image)
             return fake_image
 
         input_semantics, real_image = self.preprocess_input(data)

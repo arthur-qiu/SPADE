@@ -482,15 +482,21 @@ class CifarEdgeModel(torch.nn.Module):
 
 
 
-    def fw_defense_z(self,input_semantics, z):
-        fake_image = self.netG(input_semantics, z=z)
+    def fw_defense_z(self,input_semantics, real_image, z):
+        if self.opt.comb > 0:
+            fake_image = self.netG(input_semantics, real_image, z=z)
+        else:
+            fake_image = self.netG(input_semantics, z=z)
         return fake_image
 
     def fw_defense_eps(self,input_semantics, real_image, eps):
         mu, logvar = self.netE(real_image)
         std = torch.exp(0.5 * logvar)
         z = eps.mul(std) + mu
-        fake_image = self.netG(input_semantics, z=z)
+        if self.opt.comb > 0:
+            fake_image = self.netG(input_semantics, real_image, z=z)
+        else:
+            fake_image = self.netG(input_semantics, z=z)
         return fake_image
 
     def adjust_lr(self, optimizer, cur_lr, decay_rate=0.1, global_step=1, rec_iter=200):
@@ -530,7 +536,7 @@ class CifarEdgeModel(torch.nn.Module):
 
                     optimizer.zero_grad()
 
-                    fake_image = self.fw_defense_z(input_semantics, z_hat)
+                    fake_image = self.fw_defense_z(input_semantics, real_image, z_hat)
 
                     reconstruct_loss = loss(fake_image, real_image)
 
@@ -548,13 +554,13 @@ class CifarEdgeModel(torch.nn.Module):
 
         for i in range(rec_restart):
 
-            fake_image = self.fw_defense_z(input_semantics, z_hats_recs[i])
+            fake_image = self.fw_defense_z(input_semantics, real_image, z_hats_recs[i])
 
             reconstructions[i] = loss(fake_image, real_image).cpu().item()
 
         min_idx = torch.argmin(reconstructions)
 
-        final_out = self.fw_defense_z(input_semantics, z_hats_recs[min_idx])
+        final_out = self.fw_defense_z(input_semantics, real_image, z_hats_recs[min_idx])
 
         return final_out
 

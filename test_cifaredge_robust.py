@@ -139,7 +139,9 @@ with torch.no_grad():
         loss_avg += float(loss.data)
 
         # forward
-        adv_output = two_nets(adv_data)
+        adv_generated = model(adv_data, mode='edge_forward').detach()
+        adv_output = net(adv_generated)
+        # adv_output = two_nets(adv_data)
         adv_loss = F.cross_entropy(adv_output, target)
 
         # accuracy

@@ -57,7 +57,7 @@ def train():
 # test function
 def test():
     net.eval()
-    two_nets = TwoNets(model, net)
+    # two_nets = TwoNets(model, net)
     loss_avg = 0.0
     correct = 0
     with torch.no_grad():
@@ -65,10 +65,12 @@ def test():
 
             data, target = data.cuda(), target.cuda()
 
-            adv_data = adversary_test(two_nets, data, target)
-
-            # forward
-            output = two_nets(adv_data)
+            # adv_data = adversary_test(two_nets, data, target)
+            #
+            # # forward
+            # output = two_nets(adv_data)
+            generated = model(data, mode='edge_forward').detach()
+            output = net(generated)
             loss = F.cross_entropy(output, target)
 
             # accuracy

@@ -683,12 +683,16 @@ class CifarCombEdgeSPADEGenerator(BaseNetwork):
             x = self.fc(z)
             x = x.view(-1, 8 * self.opt.ngf, self.sh, self.sw)
             comb_map = x.view(-1, 8, self.sh * int(self.opt.ngf ** 0.5), self.sw * int(self.opt.ngf ** 0.5))
-            grey_real = torch.sum(real_img, 1, keepdim=True) / 3
-            coef_map = torch.sum(comb_map, 1, keepdim=True) / 8
-            if self.opt.sr > 0:
-                coef_map = nn.functional.interpolate(coef_map, scale_factor = 1/self.opt.sr, mode = 'nearest')
-                coef_map = nn.functional.interpolate(coef_map, scale_factor= self.opt.sr, mode='nearest')
+            if self.opt.diy:
+                grey_real = torch.sum(real_img * (comb_map[:,0:3,:,:]+comb_map[:,3:6,:,:]), 1, keepdim=True) / 6
+                coef_map = torch.sum(comb_map[:,6:8,:,:], 1, keepdim=True) / 2
+            else:
+                grey_real = torch.sum(real_img, 1, keepdim=True) / 3
+                coef_map = torch.sum(comb_map, 1, keepdim=True) / 8
             seg = torch.cat([input, grey_real * coef_map], 1)
+            if self.opt.sr > 0:
+                seg = nn.functional.interpolate(seg, scale_factor=1 / self.opt.sr, mode='nearest')
+                seg = nn.functional.interpolate(seg, scale_factor=self.opt.sr, mode='nearest')
 
         else:
             # we downsample segmap and run convolution

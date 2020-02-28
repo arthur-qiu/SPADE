@@ -175,7 +175,7 @@ class CifarEdgeModel(torch.nn.Module):
 
     def create_optimizers(self, opt):
         G_params = list(self.netG.parameters())
-        if opt.use_vae:
+        if opt.use_vae and not opt.pretrain_vae:
             G_params += list(self.netE.parameters())
         if opt.isTrain:
             D_params = list(self.netD.parameters())
@@ -224,6 +224,8 @@ class CifarEdgeModel(torch.nn.Module):
                 netD = util.load_network(netD, 'D', opt.which_epoch, opt)
             if opt.use_vae:
                 netE = util.load_network(netE, 'E', opt.which_epoch, opt)
+        elif opt.use_vae and opt.pretrain_vae:
+            netE = util.load_network(netE, 'E', opt.which_epoch, opt)
 
         return netG, netD, netE
 

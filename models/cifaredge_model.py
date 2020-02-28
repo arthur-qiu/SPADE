@@ -226,6 +226,7 @@ class CifarEdgeModel(torch.nn.Module):
                 netE = util.load_network(netE, 'E', opt.which_epoch, opt)
         elif opt.use_vae and opt.pretrain_vae:
             netE = util.load_network(netE, 'E', opt.which_epoch, opt)
+            print('Load and fixed netE.')
 
         return netG, netD, netE
 

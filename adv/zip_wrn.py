@@ -23,17 +23,16 @@ class BinarizedF(Function):
         self.save_for_backward(input)
         a = torch.ones_like(input)
         b = -torch.ones_like(input)
+        # b = torch.zeros_like(input)
         output = torch.where(input>=0,a,b)
         return output
 
     def backward(self, output_grad):
-        # input, = self.saved_tensors
-        # input_abs = torch.abs(input)
-        # ones = torch.ones_like(input)
-        # zeros = torch.zeros_like(input)
-        # input_grad = torch.where(input_abs<=1,ones, zeros)
-        # return input_grad
-        return output_grad
+        input_grad = output_grad.clone()
+        return input_grad
+
+def bilu(input):
+    return BinarizedF()(input)
 
 
 class ZipNet(nn.Module):
@@ -50,7 +49,7 @@ class ZipNet(nn.Module):
         self.conv3 = nn.Conv2d(32, 1, kernel_size=3, stride=1,
                                padding=1, bias=False)
         self.tanh = nn.Tanh()
-        self.BF = BinarizedF()
+        # self.BF = BinarizedF()
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -63,7 +62,8 @@ class ZipNet(nn.Module):
     def forward(self, x):
         out = self.relu1(self.bn1(self.conv1(x)))
         out = self.relu2(self.bn2(self.conv2(out)))
-        out = self.BF(self.tanh(self.conv3(out)))
+        # out = self.BF(self.tanh(self.conv3(out)))
+        out = bilu(self.tanh(self.conv3(out)))
         return out
 
 
@@ -135,7 +135,7 @@ class NoiseZipNet(nn.Module):
         self.conv3 = nn.Conv2d(32, 1, kernel_size=3, stride=1,
                                padding=1, bias=False)
         self.tanh = nn.Tanh()
-        self.BF = BinarizedF()
+        # self.BF = BinarizedF()
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -148,7 +148,8 @@ class NoiseZipNet(nn.Module):
     def forward(self, x):
         out = self.relu1(self.bn1(self.conv1(nn.functional.conv2d(self.pad(x + torch.randn(x.size()).cuda() * self.std * 2), self.filter_weight1, groups = 3))))
         out = self.relu2(self.bn2(self.conv2(nn.functional.conv2d(self.pad(out + torch.randn(out.size()).cuda() * self.std), self.filter_weight2, groups = 32))))
-        out = self.BF(self.tanh(self.conv3(out)))
+        # out = self.BF(self.tanh(self.conv3(out)))
+        out = bilu(self.tanh(self.conv3(out)))
         return out
 
 class BlurZipNet(nn.Module):
@@ -178,7 +179,7 @@ class BlurZipNet(nn.Module):
         self.conv3 = nn.Conv2d(32, 1, kernel_size=3, stride=1,
                                padding=1, bias=False)
         self.tanh = nn.Tanh()
-        self.BF = BinarizedF()
+        # self.BF = BinarizedF()
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -191,7 +192,8 @@ class BlurZipNet(nn.Module):
     def forward(self, x):
         out = self.relu1(self.bn1(self.conv1(nn.functional.conv2d(self.pad(x + torch.randn(x.size()).cuda() * self.std * 2), self.filter_weight1, groups = 3))))
         out = self.relu2(self.bn2(self.conv2(out)))
-        out = self.BF(self.tanh(self.conv3(out)))
+        # out = self.BF(self.tanh(self.conv3(out)))
+        out = bilu(self.tanh(self.conv3(out)))
         return out
 
 class BlurZipCNN(nn.Module):
@@ -246,7 +248,7 @@ class Zip16Net(nn.Module):
         self.conv2 = nn.Conv2d(16, 1, kernel_size=3, stride=1,
                                padding=1, bias=False)
         self.tanh = nn.Tanh()
-        self.BF = BinarizedF()
+        # self.BF = BinarizedF()
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -258,7 +260,8 @@ class Zip16Net(nn.Module):
 
     def forward(self, x):
         out = self.relu1(self.bn1(self.conv1(x)))
-        out = self.BF(self.tanh(self.conv2(out)))
+        # out = self.BF(self.tanh(self.conv2(out)))
+        out = bilu(self.tanh(self.conv2(out)))
         return out
 
 

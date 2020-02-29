@@ -80,7 +80,8 @@ class CifarEdgeModel(torch.nn.Module):
 
         if opt.cnn_edge:
             from adv import zip_wrn
-            self.edge_net = zip_wrn.BlurZipNet()
+            self.edge_net = zip_wrn.ZipNet()
+            # self.edge_net = zip_wrn.BlurZipNet()
             if len(opt.gpu_ids) > 0:
                 assert (torch.cuda.is_available())
                 self.edge_net.cuda()

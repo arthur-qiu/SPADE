@@ -34,28 +34,6 @@ class CifarEdgeModel(torch.nn.Module):
         self.ByteTensor = torch.cuda.ByteTensor if self.use_gpu() \
             else torch.ByteTensor
 
-        if opt.cnn_edge:
-            from adv import zip_wrn
-            self.edge_net = zip_wrn.ZipNet()
-            # self.edge_net = zip_wrn.BlurZipNet()
-            if len(opt.gpu_ids) > 0:
-                assert (torch.cuda.is_available())
-                self.edge_net.cuda()
-
-            if opt.load != '':
-                self.edge_net = IdentityMapping(self.edge_net)
-                if os.path.isfile(opt.load):
-                    self.edge_net.load_state_dict(torch.load(opt.load))
-                    print('Appointed Model Restored!')
-                else:
-                    model_name = os.path.join(opt.load, opt.dataset + opt.cls_model +
-                                              '_epoch_' + str(opt.start_epoch) + '.pt')
-                    if os.path.isfile(model_name):
-                        self.edge_net.load_state_dict(torch.load(model_name))
-                        print('Model restored! Epoch:', opt.start_epoch)
-                    else:
-                        raise Exception("Could not resume")
-
         self.netG, self.netD, self.netE = self.initialize_networks(opt)
 
         self.canny_net = backward_canny.Canny_Net(opt.sigma, opt.high_threshold, opt.low_threshold, opt.robust_threshold)
@@ -96,6 +74,28 @@ class CifarEdgeModel(torch.nn.Module):
                                               '_epoch_' + str(opt.start_epoch) + '.pt')
                     if os.path.isfile(model_name):
                         self.net.load_state_dict(torch.load(model_name))
+                        print('Model restored! Epoch:', opt.start_epoch)
+                    else:
+                        raise Exception("Could not resume")
+
+        if opt.cnn_edge:
+            from adv import zip_wrn
+            self.edge_net = zip_wrn.ZipNet()
+            # self.edge_net = zip_wrn.BlurZipNet()
+            if len(opt.gpu_ids) > 0:
+                assert (torch.cuda.is_available())
+                self.edge_net.cuda()
+
+            if opt.load != '':
+                self.edge_net = IdentityMapping(self.edge_net)
+                if os.path.isfile(opt.load):
+                    self.edge_net.load_state_dict(torch.load(opt.load))
+                    print('Appointed Model Restored!')
+                else:
+                    model_name = os.path.join(opt.load, opt.dataset + opt.cls_model +
+                                              '_epoch_' + str(opt.start_epoch) + '.pt')
+                    if os.path.isfile(model_name):
+                        self.edge_net.load_state_dict(torch.load(model_name))
                         print('Model restored! Epoch:', opt.start_epoch)
                     else:
                         raise Exception("Could not resume")

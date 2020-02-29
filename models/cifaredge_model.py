@@ -136,7 +136,7 @@ class CifarEdgeModel(torch.nn.Module):
                 input_semantics, real_image)
             return g_loss, generated
         elif mode == 'generator_cnnedge':
-            input_semantics = self.edge_net(input_semantics)
+            input_semantics = self.edge_net(real_image)
             g_loss, generated = self.compute_generator_loss(
                 input_semantics, real_image)
             return g_loss, generated
@@ -150,7 +150,7 @@ class CifarEdgeModel(torch.nn.Module):
                 input_semantics, real_image)
             return d_loss
         elif mode == 'discriminator_cnnedge':
-            input_semantics = self.edge_net(input_semantics)
+            input_semantics = self.edge_net(real_image)
             d_loss = self.compute_discriminator_loss(
                 input_semantics, real_image)
             return d_loss

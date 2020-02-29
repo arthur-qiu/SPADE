@@ -82,9 +82,9 @@ class CifarEdgeModel(torch.nn.Module):
             from adv import zip_wrn
             self.edge_net = zip_wrn.ZipNet()
             # self.edge_net = zip_wrn.BlurZipNet()
-            # if len(opt.gpu_ids) > 0:
-            #     assert (torch.cuda.is_available())
-            #     self.edge_net.cuda()
+            if len(opt.gpu_ids) > 0:
+                assert (torch.cuda.is_available())
+                self.edge_net.cuda(7)
 
             if opt.load != '':
                 self.edge_net = IdentityMapping(self.edge_net)

@@ -114,6 +114,7 @@ class BaseOptions():
         parser.add_argument('--diy', action='store_true', help='weather to use diy method')
         parser.add_argument('--blur_edge', action='store_true', help='weather to blur edge')
         parser.add_argument('--npp', type=int, default= 0, help='npp for squeeze')
+        parser.add_argument('--cat', type=int, default= 0, help='cat and npp for squeeze')
 
         # WRN Architecture
         parser.add_argument('--layers', default=28, type=int, help='total number of layers')

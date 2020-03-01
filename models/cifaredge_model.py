@@ -112,6 +112,13 @@ class CifarEdgeModel(torch.nn.Module):
             real_image = data.cuda()
             if self.opt.cnn_edge:
                 edge = self.edge_net(real_image)
+            elif self.opt.cat > 0:
+                grey_img = torch.sum(real_image, 1, keepdim=True) / 3
+                npp_map = util.squeeze_tensor(grey_img, self.opt.cat)
+                edge = forward_canny.get_edge(real_image, self.opt.sigma, self.opt.high_threshold,
+                                              self.opt.low_threshold,
+                                              self.opt.robust_threshold).detach()
+                edge = (edge * npp_map + edge) / 2
             elif self.opt.npp > 0:
                 grey_img = torch.sum(real_image, 1, keepdim=True) / 3
                 edge = util.squeeze_tensor(grey_img, self.opt.npp)
@@ -128,6 +135,11 @@ class CifarEdgeModel(torch.nn.Module):
             real_image = data.cuda()
             if self.opt.cnn_edge:
                 edge = self.edge_net(real_image)
+            elif self.opt.cat > 0:
+                grey_img = torch.sum(real_image, 1, keepdim=True) / 3
+                npp_map = util.squeeze_tensor(grey_img, self.opt.cat)
+                edge = self.canny_net(real_image)
+                edge = (edge * npp_map + edge) / 2
             elif self.opt.npp > 0:
                 grey_img = torch.sum(real_image, 1, keepdim=True) / 3
                 edge = util.squeeze_tensor(grey_img, self.opt.npp)
@@ -141,7 +153,11 @@ class CifarEdgeModel(torch.nn.Module):
 
         input_semantics, real_image = self.preprocess_input(data)
 
-        if self.opt.npp > 0:
+        if self.opt.cat > 0:
+            grey_img = torch.sum(real_image, 1, keepdim=True) / 3
+            npp_map = util.squeeze_tensor(grey_img, self.opt.cat)
+            input_semantics = (input_semantics * npp_map + input_semantics) / 2
+        elif self.opt.npp > 0:
             grey_img = torch.sum(real_image, 1, keepdim=True) / 3
             input_semantics = util.squeeze_tensor(grey_img, self.opt.npp)
 

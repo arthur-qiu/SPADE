@@ -275,3 +275,18 @@ class Colorize(object):
             color_image[2][mask] = self.cmap[label][2]
 
         return color_image
+
+def squeeze_tensor(x, npp):
+    """
+    Reduce the precision of image, the numpy version.
+    :param x: a float tensor, which has been scaled to [-1, 1].
+    :param npp: number of possible values per pixel. E.g. it's 256 for 8-bit gray-scale image, and 2 for binarized image.
+    :return: a tensor representing image(s) with lower precision.
+    """
+    # Note: 0 is a possible value too.
+    x = (x + 1) / 2
+    npp_int = npp - 1
+    x_int = torch.round(x * npp_int)
+    x_float = x_int / npp_int
+    x_float = x_float * 2 - 1
+    return x_float

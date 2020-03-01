@@ -112,6 +112,9 @@ class CifarEdgeModel(torch.nn.Module):
             real_image = data.cuda()
             if self.opt.cnn_edge:
                 edge = self.edge_net(real_image)
+            elif self.opt.npp > 0:
+                grey_img = torch.sum(real_image, 1, keepdim=True) / 3
+                edge = util.squeeze_tensor(grey_img, self.opt.npp)
             else:
                 edge = forward_canny.get_edge(real_image, self.opt.sigma, self.opt.high_threshold, self.opt.low_threshold,
                                           self.opt.robust_threshold).detach()
@@ -125,6 +128,9 @@ class CifarEdgeModel(torch.nn.Module):
             real_image = data.cuda()
             if self.opt.cnn_edge:
                 edge = self.edge_net(real_image)
+            elif self.opt.npp > 0:
+                grey_img = torch.sum(real_image, 1, keepdim=True) / 3
+                edge = util.squeeze_tensor(grey_img, self.opt.npp)
             else:
                 edge = self.canny_net(real_image)
             if self.opt.comb > 0:
@@ -134,6 +140,10 @@ class CifarEdgeModel(torch.nn.Module):
             return fake_image
 
         input_semantics, real_image = self.preprocess_input(data)
+
+        if self.opt.npp > 0:
+            grey_img = torch.sum(real_image, 1, keepdim=True) / 3
+            input_semantics = util.squeeze_tensor(grey_img, self.opt.npp)
 
         if mode == 'generator':
             g_loss, generated = self.compute_generator_loss(

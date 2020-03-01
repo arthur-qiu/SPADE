@@ -107,6 +107,7 @@ class BaseOptions():
         parser.add_argument('--random_seed', type=int, default=1)
         parser.add_argument('--cls', action='store_true', help='add cls to training process')
         parser.add_argument('--cnn_edge', action='store_true', help='use cnn to extract edge')
+        parser.add_argument('--cnnedge_load', type=str, default='', help='Checkpoint for cnnedge path to resume / test.')
         parser.add_argument('--comb', type=int, default= 0, help='additional info')
         parser.add_argument('--sr', type=int, default=0, help='factor of down-sample and up-sample')
         parser.add_argument('--pretrain_vae',  action='store_true', help='use pretrained vae')

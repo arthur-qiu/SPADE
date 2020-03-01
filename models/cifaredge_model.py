@@ -86,13 +86,13 @@ class CifarEdgeModel(torch.nn.Module):
                 assert (torch.cuda.is_available())
                 self.edge_net.cuda()
 
-            if opt.load != '':
+            if opt.cnnedge_load != '':
                 self.edge_net = IdentityMapping(self.edge_net)
-                if os.path.isfile(opt.load):
-                    self.edge_net.load_state_dict(torch.load(opt.load))
+                if os.path.isfile(opt.cnnedge_load):
+                    self.edge_net.load_state_dict(torch.load(opt.cnnedge_load))
                     print('Appointed Model Restored!')
                 else:
-                    model_name = os.path.join(opt.load, opt.dataset + opt.cls_model +
+                    model_name = os.path.join(opt.cnnedge_load, opt.dataset + opt.cls_model +
                                               '_epoch_' + str(opt.start_epoch) + '.pt')
                     if os.path.isfile(model_name):
                         self.edge_net.load_state_dict(torch.load(model_name))

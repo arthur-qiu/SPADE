@@ -112,6 +112,7 @@ class BaseOptions():
         parser.add_argument('--sr', type=int, default=0, help='factor of down-sample and up-sample')
         parser.add_argument('--pretrain_vae',  action='store_true', help='use pretrained vae')
         parser.add_argument('--diy', action='store_true', help='weather to use diy method')
+        parser.add_argument('--blur_edge', action='store_true', help='weather to blur edge')
 
         # WRN Architecture
         parser.add_argument('--layers', default=28, type=int, help='total number of layers')

@@ -278,9 +278,6 @@ class Colorize(object):
         return color_image
 
 class SelfRound(Function):
-    def __init__(self, threshold):
-        super(SelfRound, self).__init__()
-        self.threshold = threshold
 
     def forward(self, input):
         self.save_for_backward(input)

@@ -213,7 +213,7 @@ class BaseOptions():
         # Set semantic_nc based on the option.
         # This will be convenient in many places
 
-        if opt.edge_ca:
+        if opt.edge_cat
             opt.label_nc += 1
         opt.semantic_nc = opt.label_nc + \
             (1 if opt.contain_dontcare_label else 0) + \

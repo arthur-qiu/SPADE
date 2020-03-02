@@ -13,6 +13,7 @@ import os
 import argparse
 import dill as pickle
 import util.coco
+from torch.autograd import Function
 
 
 def save_obj(obj, name):
@@ -276,6 +277,23 @@ class Colorize(object):
 
         return color_image
 
+class SelfRound(Function):
+    def __init__(self, threshold):
+        super(SelfRound, self).__init__()
+        self.threshold = threshold
+
+    def forward(self, input):
+        self.save_for_backward(input)
+        output = torch.round(input)
+        return output
+
+    def backward(self, grad_output):
+        result, = self.saved_tensors
+        return grad_output * result
+
+def selfround(input):
+    return SelfRound()(input)
+
 def squeeze_tensor(x, npp):
     """
     Reduce the precision of image, the numpy version.
@@ -286,7 +304,7 @@ def squeeze_tensor(x, npp):
     # Note: 0 is a possible value too.
     x = (x + 1) / 2
     npp_int = npp - 1
-    x_int = torch.round(x * npp_int)
+    x_int = selfround(x * npp_int)
     x_float = x_int / npp_int
     x_float = x_float * 2 - 1
     return x_float

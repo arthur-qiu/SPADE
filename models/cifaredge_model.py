@@ -111,7 +111,14 @@ class CifarEdgeModel(torch.nn.Module):
         if mode == "edge_forward":
             real_image = data.cuda()
             if self.opt.cnn_edge:
-                edge = self.edge_net(real_image)
+                if self.opt.edge_cat:
+                    edge1  = self.edge_net(real_image)
+                    edge2 = forward_canny.get_edge(real_image, self.opt.sigma, self.opt.high_threshold,
+                                                  self.opt.low_threshold,
+                                                  self.opt.robust_threshold).detach()
+                    edge = torch.cat([edge1 * edge2, edge2], 1)
+                else:
+                    edge = self.edge_net(real_image)
             elif self.opt.cat > 0:
                 grey_img = torch.sum(real_image, 1, keepdim=True) / 3
                 npp_map = util.squeeze_tensor(grey_img, self.opt.cat)
@@ -134,7 +141,12 @@ class CifarEdgeModel(torch.nn.Module):
         elif mode == "edge_back":
             real_image = data.cuda()
             if self.opt.cnn_edge:
-                edge = self.edge_net(real_image)
+                if self.opt.edge_cat:
+                    edge1  = self.edge_net(real_image)
+                    edge2 = self.canny_net(real_image)
+                    edge = torch.cat([edge1 * edge2, edge2], 1)
+                else:
+                    edge = self.edge_net(real_image)
             elif self.opt.cat > 0:
                 grey_img = torch.sum(real_image, 1, keepdim=True) / 3
                 npp_map = util.squeeze_tensor(grey_img, self.opt.cat)
@@ -153,7 +165,11 @@ class CifarEdgeModel(torch.nn.Module):
 
         input_semantics, real_image = self.preprocess_input(data)
 
-        if self.opt.cat > 0:
+        if self.opt.edge_cat:
+            edge1 = self.edge_net(real_image)
+            input_semantics = torch.cat([edge1 * input_semantics, input_semantics], 1)
+
+        elif self.opt.cat > 0:
             grey_img = torch.sum(real_image, 1, keepdim=True) / 3
             npp_map = util.squeeze_tensor(grey_img, self.opt.cat)
             input_semantics = (input_semantics * npp_map + input_semantics) / 2

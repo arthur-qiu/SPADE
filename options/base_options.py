@@ -115,6 +115,7 @@ class BaseOptions():
         parser.add_argument('--blur_edge', action='store_true', help='weather to blur edge')
         parser.add_argument('--npp', type=int, default= 0, help='npp for squeeze')
         parser.add_argument('--cat', type=int, default= 0, help='cat and npp for squeeze')
+        parser.add_argument('--edge_cat', action='store_true', help='cat with cnn edge')
 
         # WRN Architecture
         parser.add_argument('--layers', default=28, type=int, help='total number of layers')
@@ -213,6 +214,7 @@ class BaseOptions():
         # This will be convenient in many places
         opt.semantic_nc = opt.label_nc + \
             (1 if opt.contain_dontcare_label else 0) + \
+            (1 if opt.edge_cat else 0) + \
             (0 if opt.no_instance else 1) + \
             opt.comb
 

@@ -116,6 +116,7 @@ class BaseOptions():
         parser.add_argument('--npp', type=int, default= 0, help='npp for squeeze')
         parser.add_argument('--cat', type=int, default= 0, help='cat and npp for squeeze')
         parser.add_argument('--edge_cat', action='store_true', help='cat with cnn edge')
+        parser.add_argument('--name2', default='', type=str, help='name of another checkpoint')
 
         # WRN Architecture
         parser.add_argument('--layers', default=28, type=int, help='total number of layers')

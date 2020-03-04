@@ -23,7 +23,7 @@ class IdentityMapping(nn.Module):
 class CifarInterpEdgeModel(torch.nn.Module):
     @staticmethod
     def modify_commandline_options(parser, is_train):
-        parser.add_argument('--name2', default='', type=str, help='name of another checkpoint')
+        # parser.add_argument('--name2', default='', type=str, help='name of another checkpoint')
         networks.modify_commandline_options(parser, is_train)
         return parser
 

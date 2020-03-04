@@ -121,8 +121,6 @@ model.eval()
 # robustness test
 
 net.eval()
-attack_interp_z = torch.zeros_like(data).uniform_(0, 1).cuda()
-two_nets = InterpNets(model, net, attack_interp_z, 'just_fw1', 'just_edge2')
 loss_avg = 0.0
 correct = 0
 adv_loss_avg = 0.0
@@ -153,6 +151,9 @@ for data, target in test_loader:
     interp_z = interp_z.clamp(0,1)
     interp_generated = interp_z * generated1 + (1 - interp_z) * generated2
 
+    attack_interp_z = torch.zeros_like(data).uniform_(0, 1).cuda()
+    two_nets = InterpNets(model, net, attack_interp_z, 'just_fw1', 'just_edge2')
+
     adv_data = adversary_test(two_nets, data, target)
 
     # forward
@@ -167,7 +168,7 @@ for data, target in test_loader:
     loss_avg += float(loss.data)
 
     # forward
-    adv_interp_z = torch.zeros_like(adv_data).uniform_(0, 1).cuda()
+    adv_interp_z = torch.zeros_like(data).uniform_(0, 1).cuda()
 
     adv_generated1 = model(adv_data, mode='just_fw1').detach().cuda()
 

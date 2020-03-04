@@ -121,7 +121,7 @@ loss_avg = 0.0
 correct = 0
 adv_loss_avg = 0.0
 adv_correct = 0
-iters_interp = 20
+iters_interp = 10
 criterionL2 = torch.nn.MSELoss()
 for data, target in test_loader:
 

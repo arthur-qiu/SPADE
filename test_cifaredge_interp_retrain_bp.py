@@ -185,7 +185,7 @@ dataloader = data.create_dataloader(opt)
 model = CifarInterpEdgeModel(opt)
 model.eval()
 
-iters_interp = 20
+iters_interp = 10
 criterionL2 = torch.nn.MSELoss()
 
 # visualizer = Visualizer(opt)

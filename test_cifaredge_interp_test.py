@@ -188,13 +188,13 @@ for data, target in test_loader:
 
 test_loss = loss_avg / len(test_loader)
 test_accuracy = correct / len(test_loader.dataset)
-# adv_test_loss = adv_loss_avg / len(test_loader)
-# adv_test_accuracy = adv_correct / len(test_loader.dataset)
+adv_test_loss = adv_loss_avg / len(test_loader)
+adv_test_accuracy = adv_correct / len(test_loader.dataset)
 
 print('test_loss:', test_loss)
 print('test_accuracy:', test_accuracy)
-# print('adv_test_loss:', adv_test_loss)
-# print('adv_test_accuracy:', adv_test_accuracy)
+print('adv_test_loss:', adv_test_loss)
+print('adv_test_accuracy:', adv_test_accuracy)
 
 
 

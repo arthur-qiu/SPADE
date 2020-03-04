@@ -50,7 +50,7 @@ def train():
         for i in range(iters_interp):
             interp_generated = torch.min(torch.max(interp_z, interp_z_min), interp_z_max) * generated1 + (
                     1 - torch.min(torch.max(interp_z, interp_z_min), interp_z_max)) * generated2
-            interp_loss = criterionL2(interp_generated, data)
+            interp_loss = criterionL2(interp_generated, bx)
             interp_optimizer.zero_grad()
             interp_loss.backward()
             interp_optimizer.step()

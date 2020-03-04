@@ -125,6 +125,8 @@ iters_interp = 20
 criterionL2 = torch.nn.MSELoss()
 for data, target in test_loader:
 
+    data, target = data.cuda(), target.cuda()
+
     interp_z = torch.zeros_like(data).uniform_(0, 1).cuda()
 
     generated1 = model(data, mode='just_fw1').detach().cuda()
@@ -141,8 +143,6 @@ for data, target in test_loader:
         optimizer.step()
 
     interp_generated = interp_z * generated1 + (1 - interp_z) * generated2
-
-    data, target = data.cuda(), target.cuda()
 
     # adv_data = adversary_test(two_nets, data, target)
 

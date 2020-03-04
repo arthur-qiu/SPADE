@@ -8,7 +8,7 @@ from collections import OrderedDict
 
 import data
 from options.test_options import TestOptions
-from models.cifaredge_model import CifarEdgeModel
+from models.cifaredge_model import CifarInterpEdgeModel
 from util.visualizer import Visualizer
 from util import html
 
@@ -35,9 +35,15 @@ def train():
     loss_avg = 0.0
     for bx, by in train_loader:
 
-        generated = model(bx, mode='edge_forward').detach()
-
         bx, by = bx.cuda(), by.cuda()
+
+        interp_z = torch.zeros_like(bx).uniform_(0, 1).cuda()
+
+        generated1 = model(bx, mode='just_fw1').detach().cuda()
+
+        generated2 = model(bx, mode='just_edge2').detach().cuda()
+
+        generated = interp_z * generated1 + (1 - interp_z) * generated2
 
         # forward
         logits = net(generated)
@@ -65,11 +71,14 @@ def test():
 
             data, target = data.cuda(), target.cuda()
 
-            # adv_data = adversary_test(two_nets, data, target)
-            #
-            # # forward
-            # output = two_nets(adv_data)
-            generated = model(data, mode='edge_forward').detach()
+            interp_z = torch.zeros_like(data).uniform_(0, 1).cuda()
+
+            generated1 = model(data, mode='just_fw1').detach().cuda()
+
+            generated2 = model(data, mode='just_edge2').detach().cuda()
+
+            generated = interp_z * generated1 + (1 - interp_z) * generated2
+
             output = net(generated)
             loss = F.cross_entropy(output, target)
 
@@ -145,7 +154,7 @@ adversary_test = pgd.PGD(epsilon=opt.epsilon * 2, num_steps=opt.test_num_steps, 
 
 dataloader = data.create_dataloader(opt)
 
-model = CifarEdgeModel(opt)
+model = CifarInterpEdgeModel(opt)
 model.eval()
 
 # visualizer = Visualizer(opt)

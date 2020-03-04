@@ -45,6 +45,11 @@ def train():
 
         generated = interp_z * generated1 + (1 - interp_z) * generated2
 
+        print(0, interp_z.shape)
+        print(1, generated1.shape)
+        print(2, generated2.shape)
+        print(3,generated.shape)
+
         # forward
         logits = net(generated)
 

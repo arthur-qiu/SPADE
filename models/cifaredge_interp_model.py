@@ -317,9 +317,6 @@ class CifarInterpEdgeModel(torch.nn.Module):
     ############################################################################
 
     def initialize_networks(self, opt):
-        netG = networks.define_G(opt)
-        netD = networks.define_D(opt) if opt.isTrain else None
-        netE = networks.define_E(opt) if opt.use_vae else None
 
         netG2 = networks.define_G(opt)
         netD2 = networks.define_D(opt) if opt.isTrain else None
@@ -338,6 +335,10 @@ class CifarInterpEdgeModel(torch.nn.Module):
             opt.label_nc -= 1
             opt.semantic_nc -= 1
 
+        netG = networks.define_G(opt)
+        netD = networks.define_D(opt) if opt.isTrain else None
+        netE = networks.define_E(opt) if opt.use_vae else None
+
         if not opt.isTrain or opt.continue_train:
             netG = util.load_network(netG, 'G', opt.which_epoch, opt)
             if opt.isTrain:
@@ -347,6 +348,10 @@ class CifarInterpEdgeModel(torch.nn.Module):
         elif opt.use_vae and opt.pretrain_vae:
             netE = util.load_network(netE, 'E', opt.which_epoch, opt)
             print('Load fixed netE.')
+
+        if opt.edge_cat:
+            opt.label_nc += 1
+            opt.semantic_nc += 1
 
         return netG, netD, netE, netG2, netD2, netE2
 

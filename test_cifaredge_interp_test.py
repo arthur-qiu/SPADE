@@ -136,12 +136,13 @@ for data, target in test_loader:
     interp_z.requires_grad = True
     optimizer = optim.Adam([interp_z], lr=0.01)
     for i in range(iters_interp):
-        interp_generated = interp_z * generated1 + (1 - interp_z) * generated2
+        interp_generated = torch.min(torch.max(interp_z,0),1) * generated1 + (1 - torch.min(torch.max(interp_z,0),1)) * generated2
         interp_loss = criterionL2(interp_generated, data)
         optimizer.zero_grad()
         interp_loss.backward()
         optimizer.step()
 
+    interp_z = interp_z.clamp(0,1)
     interp_generated = interp_z * generated1 + (1 - interp_z) * generated2
 
     # adv_data = adversary_test(two_nets, data, target)

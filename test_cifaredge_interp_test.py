@@ -31,7 +31,7 @@ class InterpNets(nn.Module):
 
     def forward(self, x):
         generated1 = self.net1(x, self.mark1)
-        generated2 = self.net2(x, self.mark2)
+        generated2 = self.net1(x, self.mark2)
         generated = self.interp_z * generated1 + (1 - self.interp_z) * generated2
 
         return self.net2(generated)

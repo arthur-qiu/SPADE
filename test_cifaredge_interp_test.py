@@ -134,9 +134,11 @@ for data, target in test_loader:
     generated2 = model(data, mode='just_edge2').detach().cuda()
 
     interp_z.requires_grad = True
+    interp_z_min = torch.zeros_like(interp_z).cuda()
+    interp_z_max = torch.zeros_like(interp_z).cuda() + 1
     optimizer = optim.Adam([interp_z], lr=0.01)
     for i in range(iters_interp):
-        interp_generated = torch.min(torch.max(interp_z,0),1) * generated1 + (1 - torch.min(torch.max(interp_z,0),1)) * generated2
+        interp_generated = torch.min(torch.max(interp_z,interp_z_min),interp_z_max) * generated1 + (1 - torch.min(torch.max(interp_z,interp_z_min),interp_z_max)) * generated2
         interp_loss = criterionL2(interp_generated, data)
         optimizer.zero_grad()
         interp_loss.backward()

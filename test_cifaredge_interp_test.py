@@ -21,15 +21,20 @@ from adv import pgd, wrn
 from torch import optim
 
 class InterpNets(nn.Module):
-    def __init__(self, net1, net2, mark1 = None, mark2 = None):
+    def __init__(self, net1, net2, z, mark1 = None, mark2 = None):
         super(InterpNets, self).__init__()
         self.net1 = net1
         self.net2 = net2
+        self.interp_z = z
         self.mark1 = mark1
         self.mark2 = mark2
 
     def forward(self, x):
-        return self.net2(self.net1(x))
+        generated1 = self.net1(x, self.mark1)
+        generated2 = self.net2(x, self.mark2)
+        generated = self.interp_z * generated1 + (1 - self.interp_z) * generated2
+
+        return self.net2(generated)
 
 opt = TestOptions().parse()
 
@@ -116,7 +121,8 @@ model.eval()
 # robustness test
 
 net.eval()
-two_nets = InterpNets(model,net)
+attack_interp_z = torch.zeros_like(data).uniform_(0, 1).cuda()
+two_nets = InterpNets(model, net, attack_interp_z, 'just_fw1', 'just_edge2')
 loss_avg = 0.0
 correct = 0
 adv_loss_avg = 0.0
@@ -147,7 +153,7 @@ for data, target in test_loader:
     interp_z = interp_z.clamp(0,1)
     interp_generated = interp_z * generated1 + (1 - interp_z) * generated2
 
-    # adv_data = adversary_test(two_nets, data, target)
+    adv_data = adversary_test(two_nets, data, target)
 
     # forward
     output = net(interp_generated)
@@ -160,18 +166,24 @@ for data, target in test_loader:
     # test loss average
     loss_avg += float(loss.data)
 
-    # # forward
-    # adv_generated = model(adv_data, mode='edge_forward').detach()
-    # adv_output = net(adv_generated)
-    # # adv_output = two_nets(adv_data)
-    # adv_loss = F.cross_entropy(adv_output, target)
-    #
-    # # accuracy
-    # adv_pred = adv_output.data.max(1)[1]
-    # adv_correct += adv_pred.eq(target.data).sum().item()
-    #
-    # # test loss average
-    # adv_loss_avg += float(adv_loss.data)
+    # forward
+    adv_interp_z = torch.zeros_like(adv_data).uniform_(0, 1).cuda()
+
+    adv_generated1 = model(adv_data, mode='just_fw1').detach().cuda()
+
+    adv_generated2 = model(adv_data, mode='just_edge2').detach().cuda()
+
+    adv_generated = adv_interp_z * adv_generated1 + (1 - adv_interp_z) * adv_generated2
+
+    adv_output = net(adv_generated)
+    adv_loss = F.cross_entropy(adv_output, target)
+
+    # accuracy
+    adv_pred = adv_output.data.max(1)[1]
+    adv_correct += adv_pred.eq(target.data).sum().item()
+
+    # test loss average
+    adv_loss_avg += float(adv_loss.data)
 
 test_loss = loss_avg / len(test_loader)
 test_accuracy = correct / len(test_loader.dataset)

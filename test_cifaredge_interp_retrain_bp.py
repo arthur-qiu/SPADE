@@ -104,7 +104,7 @@ def test():
             interp_optimizer.step()
 
         interp_z = interp_z.clamp(0, 1)
-        
+
         with torch.no_grad():
             generated = interp_z * generated1 + (1 - interp_z) * generated2
 

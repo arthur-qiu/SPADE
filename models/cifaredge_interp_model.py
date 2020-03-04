@@ -134,6 +134,11 @@ class CifarInterpEdgeModel(torch.nn.Module):
             edge = torch.cat([edge1 * edge2, edge2], 1)
             fake_image, _ = self.generate_fake(edge, real_image)
             return fake_image
+        elif mode == "just_cannyedge1":
+            real_image = data.cuda()
+            edge = forward_canny.get_edge(real_image, self.opt.sigma, self.opt.high_threshold, self.opt.low_threshold,
+                                          self.opt.robust_threshold).detach()
+            return edge
         elif mode == "just_fw2":
             real_image = data.cuda()
             edge = forward_canny.get_edge(real_image, self.opt.sigma, self.opt.high_threshold, self.opt.low_threshold,
@@ -159,6 +164,14 @@ class CifarInterpEdgeModel(torch.nn.Module):
             edge = torch.cat([edge1 * edge2, edge2], 1)
             fake_image, _ = self.generate_fake2(edge, real_image)
             return fake_image
+        elif mode == "just_catedge2":
+            real_image = data.cuda()
+            edge1 = self.edge_net(real_image)
+            edge2 = forward_canny.get_edge(real_image, self.opt.sigma, self.opt.high_threshold,
+                                           self.opt.low_threshold,
+                                           self.opt.robust_threshold).detach()
+            edge = edge1 * edge2
+            return edge
 
         if mode == "edge_forward":
             real_image = data.cuda()

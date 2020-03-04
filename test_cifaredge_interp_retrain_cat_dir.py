@@ -17,7 +17,7 @@ import torch.nn as nn
 import torchvision.transforms as trn
 import torchvision.datasets as dset
 import torch.nn.functional as F
-from adv import pgd, wrn
+from adv import pgd, zip_wrn
 import json
 import time
 
@@ -39,23 +39,9 @@ def train():
 
         interp_z = torch.zeros_like(bx).uniform_(0, 1).cuda()
 
-        generated1 = model(bx, mode='just_cannyedge1').detach().cuda()
+        generated1 = model(bx, mode='just_fw1').detach().cuda()
 
-        generated2 = model(bx, mode='just_catedge2').detach().cuda()
-
-        interp_z.requires_grad = True
-        interp_z_min = torch.zeros_like(interp_z).cuda()
-        interp_z_max = torch.zeros_like(interp_z).cuda() + 1
-        interp_optimizer = torch.optim.Adam([interp_z], lr=0.01)
-        for i in range(iters_interp):
-            interp_generated = torch.min(torch.max(interp_z, interp_z_min), interp_z_max) * generated1 + (
-                    1 - torch.min(torch.max(interp_z, interp_z_min), interp_z_max)) * generated2
-            interp_loss = criterionL2(interp_generated, bx)
-            interp_optimizer.zero_grad()
-            interp_loss.backward()
-            interp_optimizer.step()
-
-        interp_z = interp_z.clamp(0, 1)
+        generated2 = model(bx, mode='just_cat2').detach().cuda()
 
         generated = interp_z * generated1 + (1 - interp_z) * generated2
 
@@ -80,32 +66,17 @@ def test():
     # two_nets = TwoNets(model, net)
     loss_avg = 0.0
     correct = 0
+    with torch.no_grad():
+        for data, target in test_loader:
 
-    for data, target in test_loader:
+            data, target = data.cuda(), target.cuda()
 
-        data, target = data.cuda(), target.cuda()
+            interp_z = torch.zeros_like(data).uniform_(0, 1).cuda()
 
-        interp_z = torch.zeros_like(data).uniform_(0, 1).cuda()
+            generated1 = model(data, mode='just_fw1').detach().cuda()
 
-        generated1 = model(data, mode='just_cannyedge1').detach().cuda()
+            generated2 = model(data, mode='just_cat2').detach().cuda()
 
-        generated2 = model(data, mode='just_catedge2').detach().cuda()
-
-        interp_z.requires_grad = True
-        interp_z_min = torch.zeros_like(interp_z).cuda()
-        interp_z_max = torch.zeros_like(interp_z).cuda() + 1
-        interp_optimizer = torch.optim.Adam([interp_z], lr=0.01)
-        for i in range(iters_interp):
-            interp_generated = torch.min(torch.max(interp_z, interp_z_min), interp_z_max) * generated1 + (
-                        1 - torch.min(torch.max(interp_z, interp_z_min), interp_z_max)) * generated2
-            interp_loss = criterionL2(interp_generated, data)
-            interp_optimizer.zero_grad()
-            interp_loss.backward()
-            interp_optimizer.step()
-
-        interp_z = interp_z.clamp(0, 1)
-
-        with torch.no_grad():
             generated = interp_z * generated1 + (1 - interp_z) * generated2
 
             output = net(generated)
@@ -148,7 +119,7 @@ test_loader = torch.utils.data.DataLoader(
 
 # Create model
 if opt.cls_model == 'wrn':
-    net = wrn.WideResNet(opt.layers, num_classes, opt.widen_factor, dropRate=opt.droprate)
+    net = zip_wrn.WideResNet(opt.layers, num_classes, opt.widen_factor, dropRate=opt.droprate)
 else:
     assert False, opt.cls_model + ' is not supported.'
 
@@ -185,9 +156,6 @@ dataloader = data.create_dataloader(opt)
 
 model = CifarInterpEdgeModel(opt)
 model.eval()
-
-iters_interp = 10
-criterionL2 = torch.nn.MSELoss()
 
 # visualizer = Visualizer(opt)
 #

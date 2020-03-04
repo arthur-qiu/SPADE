@@ -125,6 +125,15 @@ class CifarInterpEdgeModel(torch.nn.Module):
             edge = self.edge_net(real_image)
             fake_image, _ = self.generate_fake(edge, real_image)
             return fake_image
+        elif mode == "just_cat1":
+            real_image = data.cuda()
+            edge1 = self.edge_net(real_image)
+            edge2 = forward_canny.get_edge(real_image, self.opt.sigma, self.opt.high_threshold,
+                                           self.opt.low_threshold,
+                                           self.opt.robust_threshold).detach()
+            edge = torch.cat([edge1 * edge2, edge2], 1)
+            fake_image, _ = self.generate_fake(edge, real_image)
+            return fake_image
         elif mode == "just_fw2":
             real_image = data.cuda()
             edge = forward_canny.get_edge(real_image, self.opt.sigma, self.opt.high_threshold, self.opt.low_threshold,
@@ -139,6 +148,15 @@ class CifarInterpEdgeModel(torch.nn.Module):
         elif mode == "just_edge2":
             real_image = data.cuda()
             edge = self.edge_net(real_image)
+            fake_image, _ = self.generate_fake2(edge, real_image)
+            return fake_image
+        elif mode == "just_cat2":
+            real_image = data.cuda()
+            edge1 = self.edge_net(real_image)
+            edge2 = forward_canny.get_edge(real_image, self.opt.sigma, self.opt.high_threshold,
+                                           self.opt.low_threshold,
+                                           self.opt.robust_threshold).detach()
+            edge = torch.cat([edge1 * edge2, edge2], 1)
             fake_image, _ = self.generate_fake2(edge, real_image)
             return fake_image
 
@@ -308,17 +326,26 @@ class CifarInterpEdgeModel(torch.nn.Module):
         netE2 = networks.define_E(opt) if opt.use_vae else None
 
         if not opt.isTrain or opt.continue_train:
-            netG = util.load_network(netG, 'G', opt.which_epoch, opt)
             netG2 = util.load_network2(netG2, 'G', opt.which_epoch, opt)
             if opt.isTrain:
-                netD = util.load_network(netD, 'D', opt.which_epoch, opt)
                 netD2 = util.load_network2(netD2, 'D', opt.which_epoch, opt)
             if opt.use_vae:
-                netE = util.load_network(netE, 'E', opt.which_epoch, opt)
                 netE2 = util.load_network2(netE2, 'E', opt.which_epoch, opt)
         elif opt.use_vae and opt.pretrain_vae:
-            netE = util.load_network(netE, 'E', opt.which_epoch, opt)
             netE2 = util.load_network2(netE2, 'E', opt.which_epoch, opt)
+
+        if opt.edge_cat:
+            opt.label_nc -= 1
+            opt.semantic_nc -= 1
+
+        if not opt.isTrain or opt.continue_train:
+            netG = util.load_network(netG, 'G', opt.which_epoch, opt)
+            if opt.isTrain:
+                netD = util.load_network(netD, 'D', opt.which_epoch, opt)
+            if opt.use_vae:
+                netE = util.load_network(netE, 'E', opt.which_epoch, opt)
+        elif opt.use_vae and opt.pretrain_vae:
+            netE = util.load_network(netE, 'E', opt.which_epoch, opt)
             print('Load fixed netE.')
 
         return netG, netD, netE, netG2, netD2, netE2

@@ -71,7 +71,7 @@ def test():
 
             data, target = data.cuda(), target.cuda()
 
-            interp_z = torch.zeros_like(data)[0:1].uniform_(0, 1).cuda()
+            interp_z = torch.zeros_like(data)[:,0:1,:,:].uniform_(0, 1).cuda()
 
             generated1 = model(data, mode='just_cannyedge1').detach().cuda()
 

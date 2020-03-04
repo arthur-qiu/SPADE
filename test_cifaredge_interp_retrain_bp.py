@@ -39,9 +39,9 @@ def train():
 
         interp_z = torch.zeros_like(bx).uniform_(0, 1).cuda()
 
-        generated1 = model(bx, mode='just_cannyedge1').detach().cuda()
+        generated1 = model(bx, mode='just_fw1').detach().cuda()
 
-        generated2 = model(bx, mode='just_catedge2').detach().cuda()
+        generated2 = model(bx, mode='just_edge2').detach().cuda()
 
         interp_z.requires_grad = True
         interp_z_min = torch.zeros_like(interp_z).cuda()
@@ -87,9 +87,9 @@ def test():
 
         interp_z = torch.zeros_like(data).uniform_(0, 1).cuda()
 
-        generated1 = model(data, mode='just_cannyedge1').detach().cuda()
+        generated1 = model(data, mode='just_fw1').detach().cuda()
 
-        generated2 = model(data, mode='just_catedge2').detach().cuda()
+        generated2 = model(data, mode='just_edge2').detach().cuda()
 
         interp_z.requires_grad = True
         interp_z_min = torch.zeros_like(interp_z).cuda()
@@ -104,7 +104,7 @@ def test():
             interp_optimizer.step()
 
         interp_z = interp_z.clamp(0, 1)
-
+        
         with torch.no_grad():
             generated = interp_z * generated1 + (1 - interp_z) * generated2
 

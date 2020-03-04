@@ -20,9 +20,10 @@ class IdentityMapping(nn.Module):
         x = self.module(x)
         return x
 
-class CifarEdgeModel(torch.nn.Module):
+class CifarInterpEdgeModel(torch.nn.Module):
     @staticmethod
     def modify_commandline_options(parser, is_train):
+        parser.add_argument('--name2', default='', type=str, help='name of another checkpoint')
         networks.modify_commandline_options(parser, is_train)
         return parser
 
@@ -34,7 +35,7 @@ class CifarEdgeModel(torch.nn.Module):
         self.ByteTensor = torch.cuda.ByteTensor if self.use_gpu() \
             else torch.ByteTensor
 
-        self.netG, self.netD, self.netE = self.initialize_networks(opt)
+        self.netG, self.netD, self.netE, self.netG2, self.netD2, self.netE2 = self.initialize_networks(opt)
 
         self.canny_net = backward_canny.Canny_Net(opt.sigma, opt.high_threshold, opt.low_threshold, opt.robust_threshold)
         if self.use_gpu():
@@ -108,21 +109,37 @@ class CifarEdgeModel(torch.nn.Module):
     # can't parallelize custom functions, we branch to different
     # routines based on |mode|.
     def forward(self, data, mode = "edge_back"):
-        if mode == "just_fw":
+        if mode == "just_fw1":
             real_image = data.cuda()
             edge = forward_canny.get_edge(real_image, self.opt.sigma, self.opt.high_threshold, self.opt.low_threshold,
                                           self.opt.robust_threshold).detach()
             fake_image, _ = self.generate_fake(edge, real_image)
             return fake_image
-        elif mode == "just_bw":
+        elif mode == "just_bw1":
             real_image = data.cuda()
             edge = self.canny_net(real_image)
             fake_image, _ = self.generate_fake(edge, real_image)
             return fake_image
-        elif mode == "just_edge":
+        elif mode == "just_edge1":
             real_image = data.cuda()
             edge = self.edge_net(real_image)
             fake_image, _ = self.generate_fake(edge, real_image)
+            return fake_image
+        elif mode == "just_fw2":
+            real_image = data.cuda()
+            edge = forward_canny.get_edge(real_image, self.opt.sigma, self.opt.high_threshold, self.opt.low_threshold,
+                                          self.opt.robust_threshold).detach()
+            fake_image, _ = self.generate_fake2(edge, real_image)
+            return fake_image
+        elif mode == "just_bw2":
+            real_image = data.cuda()
+            edge = self.canny_net(real_image)
+            fake_image, _ = self.generate_fake2(edge, real_image)
+            return fake_image
+        elif mode == "just_edge2":
+            real_image = data.cuda()
+            edge = self.edge_net(real_image)
+            fake_image, _ = self.generate_fake2(edge, real_image)
             return fake_image
 
         if mode == "edge_forward":
@@ -286,17 +303,25 @@ class CifarEdgeModel(torch.nn.Module):
         netD = networks.define_D(opt) if opt.isTrain else None
         netE = networks.define_E(opt) if opt.use_vae else None
 
+        netG2 = networks.define_G(opt)
+        netD2 = networks.define_D(opt) if opt.isTrain else None
+        netE2 = networks.define_E(opt) if opt.use_vae else None
+
         if not opt.isTrain or opt.continue_train:
             netG = util.load_network(netG, 'G', opt.which_epoch, opt)
+            netG2 = util.load_network2(netG, 'G', opt.which_epoch, opt)
             if opt.isTrain:
                 netD = util.load_network(netD, 'D', opt.which_epoch, opt)
+                netD2 = util.load_network2(netD, 'D', opt.which_epoch, opt)
             if opt.use_vae:
                 netE = util.load_network(netE, 'E', opt.which_epoch, opt)
+                netE2 = util.load_networ2k(netE, 'E', opt.which_epoch, opt)
         elif opt.use_vae and opt.pretrain_vae:
             netE = util.load_network(netE, 'E', opt.which_epoch, opt)
+            netE2 = util.load_network(netE2, 'E', opt.which_epoch, opt)
             print('Load fixed netE.')
 
-        return netG, netD, netE
+        return netG, netD, netE, netG2, netD2, netE2
 
     # preprocess the input, such as moving the tensors to GPUs and
     # transforming the label map to one-hot encoding
@@ -401,6 +426,11 @@ class CifarEdgeModel(torch.nn.Module):
         z = self.reparameterize(mu, logvar)
         return z, mu, logvar
 
+    def encode_z2(self, real_image):
+        mu, logvar = self.netE2(real_image)
+        z = self.reparameterize(mu, logvar)
+        return z, mu, logvar
+
     def generate_fake(self, input_semantics, real_image, compute_kld_loss=False):
         z = None
         KLD_loss = None
@@ -410,6 +440,21 @@ class CifarEdgeModel(torch.nn.Module):
                 KLD_loss = self.KLDLoss(mu, logvar) * self.opt.lambda_kld
 
         fake_image = self.netG(input_semantics, z=z)
+
+        assert (not compute_kld_loss) or self.opt.use_vae, \
+            "You cannot compute KLD loss if opt.use_vae == False"
+
+        return fake_image, KLD_loss
+
+    def generate_fake2(self, input_semantics, real_image, compute_kld_loss=False):
+        z = None
+        KLD_loss = None
+        if self.opt.use_vae:
+            z, mu, logvar = self.encode_z2(real_image)
+            if compute_kld_loss:
+                KLD_loss = self.KLDLoss(mu, logvar) * self.opt.lambda_kld
+
+        fake_image = self.netG2(input_semantics, z=z)
 
         assert (not compute_kld_loss) or self.opt.use_vae, \
             "You cannot compute KLD loss if opt.use_vae == False"

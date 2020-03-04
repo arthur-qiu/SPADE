@@ -21,7 +21,7 @@ from adv import pgd, wrn
 from torch import optim
 
 class InterpNets(nn.Module):
-    def __init__(self, net1, net2, mark1, mark2):
+    def __init__(self, net1, net2, mark1 = None, mark2 = None):
         super(InterpNets, self).__init__()
         self.net1 = net1
         self.net2 = net2

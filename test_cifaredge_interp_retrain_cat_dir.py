@@ -37,7 +37,7 @@ def train():
 
         bx, by = bx.cuda(), by.cuda()
 
-        interp_z = torch.zeros_like(bx).uniform_(0, 1).cuda()
+        interp_z = torch.zeros_like(bx)[0:1].uniform_(0, 1).cuda()
 
         generated1 = model(bx, mode='just_cannyedge1').detach().cuda()
 
@@ -71,7 +71,7 @@ def test():
 
             data, target = data.cuda(), target.cuda()
 
-            interp_z = torch.zeros_like(data).uniform_(0, 1).cuda()
+            interp_z = torch.zeros_like(data)[0:1].uniform_(0, 1).cuda()
 
             generated1 = model(data, mode='just_cannyedge1').detach().cuda()
 

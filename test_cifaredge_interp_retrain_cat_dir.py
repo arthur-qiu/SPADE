@@ -37,18 +37,13 @@ def train():
 
         bx, by = bx.cuda(), by.cuda()
 
-        interp_z = torch.zeros_like(bx)[0:1].uniform_(0, 1).cuda()
+        interp_z = torch.zeros_like(bx)[:,0:1,:,:].uniform_(0, 1).cuda()
 
         generated1 = model(bx, mode='just_cannyedge1').detach().cuda()
 
         generated2 = model(bx, mode='just_catedge2').detach().cuda()
 
         generated = interp_z * generated1 + (1 - interp_z) * generated2
-
-        print(0, interp_z.shape)
-        print(1, generated1.shape)
-        print(2, generated2.shape)
-        print(3,generated.shape)
 
         # forward
         logits = net(generated)

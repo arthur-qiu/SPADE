@@ -309,16 +309,16 @@ class CifarInterpEdgeModel(torch.nn.Module):
 
         if not opt.isTrain or opt.continue_train:
             netG = util.load_network(netG, 'G', opt.which_epoch, opt)
-            netG2 = util.load_network2(netG, 'G', opt.which_epoch, opt)
+            netG2 = util.load_network2(netG2, 'G', opt.which_epoch, opt)
             if opt.isTrain:
                 netD = util.load_network(netD, 'D', opt.which_epoch, opt)
-                netD2 = util.load_network2(netD, 'D', opt.which_epoch, opt)
+                netD2 = util.load_network2(netD2, 'D', opt.which_epoch, opt)
             if opt.use_vae:
                 netE = util.load_network(netE, 'E', opt.which_epoch, opt)
-                netE2 = util.load_networ2k(netE, 'E', opt.which_epoch, opt)
+                netE2 = util.load_network2(netE2, 'E', opt.which_epoch, opt)
         elif opt.use_vae and opt.pretrain_vae:
             netE = util.load_network(netE, 'E', opt.which_epoch, opt)
-            netE2 = util.load_network(netE2, 'E', opt.which_epoch, opt)
+            netE2 = util.load_network2(netE2, 'E', opt.which_epoch, opt)
             print('Load fixed netE.')
 
         return netG, netD, netE, netG2, netD2, netE2

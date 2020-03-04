@@ -8,7 +8,7 @@ from collections import OrderedDict
 
 import data
 from options.test_options import TestOptions
-from models.cifaredge_model import CifarInterpEdgeModel
+from models.cifaredge_interp_model import CifarInterpEdgeModel
 from util.visualizer import Visualizer
 from util import html
 

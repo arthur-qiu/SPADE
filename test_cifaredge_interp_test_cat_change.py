@@ -29,7 +29,7 @@ class InterpNets(nn.Module):
         self.mark2 = mark2
 
     def forward(self, x):
-        attack_interp_z = torch.zeros_like(data)[:, 0:1, :, :].uniform_(0, 1).cuda()
+        attack_interp_z = torch.zeros_like(x)[:, 0:1, :, :].uniform_(0, 1).cuda()
         generated1 = self.net1(x, self.mark1)
         generated2 = self.net1(x, self.mark2)
         generated = attack_interp_z * generated1 + (1 - attack_interp_z) * generated2

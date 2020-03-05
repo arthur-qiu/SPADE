@@ -27,14 +27,36 @@ class InterpNets(nn.Module):
         self.net2 = net2
         self.mark1 = mark1
         self.mark2 = mark2
+        self.iters_interp = 10
 
     def forward(self, x):
-        attack_interp_z = torch.zeros_like(x)[:, 0:1, :, :].uniform_(0, 1).cuda()
-        generated1 = self.net1(x, self.mark1)
-        generated2 = self.net1(x, self.mark2)
-        generated = attack_interp_z * generated1 + (1 - attack_interp_z) * generated2
+
+        generated1 = self.net1(x, self.mark1).detach()
+        generated2 = self.net1(x, self.mark2).detach()
+
+        interp_z = torch.zeros_like(x)[:, 0:1, :, :].uniform_(0, 1).cuda()
+
+        interp_z.requires_grad = True
+        interp_z_min = torch.zeros_like(interp_z).cuda()
+        interp_z_max = torch.zeros_like(interp_z).cuda() + 1
+        attack_optimizer = optim.Adam([interp_z], lr=0.01)
+        for i in range(self.iters_interp):
+            interp_generated = torch.min(torch.max(interp_z, interp_z_min), interp_z_max) * generated1 + (
+                        1 - torch.min(torch.max(interp_z, interp_z_min), interp_z_max)) * generated2
+            interp_loss = criterionL2(interp_generated, x)
+            attack_optimizer.zero_grad()
+            interp_loss.backward()
+            attack_optimizer.step()
+
+        interp_z = interp_z.clamp(0, 1)
+
+        generated1_bp = self.net1(x, self.mark1)
+        generated2_bp = self.net1(x, self.mark2)
+
+        generated = interp_z * generated1_bp + (1 - interp_z) * generated2_bp
 
         return self.net2(generated)
+
 
 opt = TestOptions().parse()
 

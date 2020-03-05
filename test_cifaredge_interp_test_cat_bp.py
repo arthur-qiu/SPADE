@@ -137,18 +137,18 @@ for data, target in test_loader:
 
     generated2 = model(data, mode='just_cat2').detach().cuda()
 
-    # interp_z.requires_grad = True
-    # interp_z_min = torch.zeros_like(interp_z).cuda()
-    # interp_z_max = torch.zeros_like(interp_z).cuda() + 1
-    # optimizer = optim.Adam([interp_z], lr=0.01)
-    # for i in range(iters_interp):
-    #     interp_generated = torch.min(torch.max(interp_z,interp_z_min),interp_z_max) * generated1 + (1 - torch.min(torch.max(interp_z,interp_z_min),interp_z_max)) * generated2
-    #     interp_loss = criterionL2(interp_generated, data)
-    #     optimizer.zero_grad()
-    #     interp_loss.backward()
-    #     optimizer.step()
-    #
-    # interp_z = interp_z.clamp(0,1)
+    interp_z.requires_grad = True
+    interp_z_min = torch.zeros_like(interp_z).cuda()
+    interp_z_max = torch.zeros_like(interp_z).cuda() + 1
+    optimizer = optim.Adam([interp_z], lr=0.01)
+    for i in range(iters_interp):
+        interp_generated = torch.min(torch.max(interp_z,interp_z_min),interp_z_max) * generated1 + (1 - torch.min(torch.max(interp_z,interp_z_min),interp_z_max)) * generated2
+        interp_loss = criterionL2(interp_generated, data)
+        optimizer.zero_grad()
+        interp_loss.backward()
+        optimizer.step()
+
+    interp_z = interp_z.clamp(0,1)
     interp_generated = interp_z * generated1 + (1 - interp_z) * generated2
 
     attack_interp_z = torch.zeros_like(data).uniform_(0, 1).cuda()
@@ -173,6 +173,19 @@ for data, target in test_loader:
     adv_generated1 = model(adv_data, mode='just_fw1').detach().cuda()
 
     adv_generated2 = model(adv_data, mode='just_cat2').detach().cuda()
+
+    adv_interp_z.requires_grad = True
+    adv_interp_z_min = torch.zeros_like(adv_interp_z).cuda()
+    adv_interp_z_max = torch.zeros_like(adv_interp_z).cuda() + 1
+    adv_optimizer = optim.Adam([adv_interp_z], lr=0.01)
+    for i in range(iters_interp):
+        adv_interp_generated = torch.min(torch.max(adv_interp_z,adv_interp_z_min),adv_interp_z_max) * adv_generated1 + (1 - torch.min(torch.max(adv_interp_z,adv_interp_z_min),adv_interp_z_max)) * adv_generated2
+        adv_interp_loss = criterionL2(adv_interp_generated, adv_data)
+        adv_optimizer.zero_grad()
+        adv_interp_loss.backward()
+        adv_optimizer.step()
+
+    adv_interp_z = adv_interp_z.clamp(0,1)
 
     adv_generated = adv_interp_z * adv_generated1 + (1 - adv_interp_z) * adv_generated2
 

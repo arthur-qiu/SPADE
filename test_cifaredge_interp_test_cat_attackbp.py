@@ -169,8 +169,7 @@ for data, target in test_loader:
     interp_z = interp_z.clamp(0,1)
     interp_generated = interp_z * generated1 + (1 - interp_z) * generated2
 
-    attack_interp_z = torch.zeros_like(data).uniform_(0, 1).cuda()
-    two_nets = InterpNets(model, net, attack_interp_z, 'just_fw1', 'just_cat2')
+    two_nets = InterpNets(model, net, 'just_fw1', 'just_cat2')
 
     adv_data = adversary_test(two_nets, data, target)
 

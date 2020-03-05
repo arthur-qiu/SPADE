@@ -34,49 +34,49 @@ class CifarEdgeModel(torch.nn.Module):
         self.ByteTensor = torch.cuda.ByteTensor if self.use_gpu() \
             else torch.ByteTensor
 
-        self.netG, self.netD, self.netE = self.initialize_networks(opt)
+        # self.netG, self.netD, self.netE = self.initialize_networks(opt)
 
         self.canny_net = backward_canny.Canny_Net(opt.sigma, opt.high_threshold, opt.low_threshold, opt.robust_threshold)
         if self.use_gpu():
             self.canny_net.cuda()
 
-        # set loss functions
-        if opt.isTrain:
-            self.criterionGAN = networks.GANLoss(
-                opt.gan_mode, tensor=self.FloatTensor, opt=self.opt)
-            self.criterionFeat = torch.nn.L1Loss()
-            if not opt.no_vgg_loss:
-                self.criterionVGG = networks.VGGLoss(self.opt.gpu_ids)
-            if opt.use_vae:
-                self.KLDLoss = networks.KLDLoss()
-
-        if opt.cls:
-            from adv import pgd, wrn
-
-            # Create model
-            if opt.cls_model == 'wrn':
-                self.net = wrn.WideResNet(opt.layers, 10, opt.widen_factor, dropRate=opt.droprate)
-            else:
-                assert False, opt.cls_model + ' is not supported.'
-
-            if len(opt.gpu_ids) > 0:
-                assert (torch.cuda.is_available())
-                self.net.cuda()
-
-            # Restore model if desired
-            if opt.load != '':
-                self.net = IdentityMapping(self.net)
-                if os.path.isfile(opt.load):
-                    self.net.load_state_dict(torch.load(opt.load))
-                    print('Appointed Model Restored!')
-                else:
-                    model_name = os.path.join(opt.load, opt.dataset + opt.cls_model +
-                                              '_epoch_' + str(opt.start_epoch) + '.pt')
-                    if os.path.isfile(model_name):
-                        self.net.load_state_dict(torch.load(model_name))
-                        print('Model restored! Epoch:', opt.start_epoch)
-                    else:
-                        raise Exception("Could not resume")
+        # # set loss functions
+        # if opt.isTrain:
+        #     self.criterionGAN = networks.GANLoss(
+        #         opt.gan_mode, tensor=self.FloatTensor, opt=self.opt)
+        #     self.criterionFeat = torch.nn.L1Loss()
+        #     if not opt.no_vgg_loss:
+        #         self.criterionVGG = networks.VGGLoss(self.opt.gpu_ids)
+        #     if opt.use_vae:
+        #         self.KLDLoss = networks.KLDLoss()
+        #
+        # if opt.cls:
+        #     from adv import pgd, wrn
+        #
+        #     # Create model
+        #     if opt.cls_model == 'wrn':
+        #         self.net = wrn.WideResNet(opt.layers, 10, opt.widen_factor, dropRate=opt.droprate)
+        #     else:
+        #         assert False, opt.cls_model + ' is not supported.'
+        #
+        #     if len(opt.gpu_ids) > 0:
+        #         assert (torch.cuda.is_available())
+        #         self.net.cuda()
+        #
+        #     # Restore model if desired
+        #     if opt.load != '':
+        #         self.net = IdentityMapping(self.net)
+        #         if os.path.isfile(opt.load):
+        #             self.net.load_state_dict(torch.load(opt.load))
+        #             print('Appointed Model Restored!')
+        #         else:
+        #             model_name = os.path.join(opt.load, opt.dataset + opt.cls_model +
+        #                                       '_epoch_' + str(opt.start_epoch) + '.pt')
+        #             if os.path.isfile(model_name):
+        #                 self.net.load_state_dict(torch.load(model_name))
+        #                 print('Model restored! Epoch:', opt.start_epoch)
+        #             else:
+        #                 raise Exception("Could not resume")
 
         if opt.cnn_edge:
             from adv import zip_wrn

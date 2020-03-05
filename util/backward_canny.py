@@ -14,7 +14,6 @@ class ThresholdF(Function):
         self.threshold = threshold
 
     def forward(self, input):
-        input = input.detach()
         self.save_for_backward(input)
         a = torch.zeros_like(input)
         output = torch.where(input < self.threshold, a, input)
@@ -23,6 +22,9 @@ class ThresholdF(Function):
     def backward(self, grad_output):
         result, = self.saved_tensors
         return grad_output * result
+
+def selfTF(threshold, input):
+    return ThresholdF(threshold)(input)
 
 class Canny_Net(nn.Module):
     def __init__(self, sigma=1.0, high_threshold=0.2, low_threshold=0.1, thres = 0.3, use_quantiles=False):
@@ -52,7 +54,6 @@ class Canny_Net(nn.Module):
         self.eps = 1e-9  # add to sqrt() to prevent nan grad
         self.gamma = 0.005  # margin
         self.thres = thres
-        # self.TF = ThresholdF(thres)
 
     def gaussian(self, x):
         # x.shape: [N, C, H, W] (?, 1, 32, 32)
@@ -128,9 +129,7 @@ class Canny_Net(nn.Module):
         abs_jsobel = torch.abs(jsobel)
         magnitude2 = isobel ** 2 + jsobel ** 2
         magnitude = torch.sqrt(magnitude2 + self.eps)
-        # self.TF = ThresholdF(self.thres)
-        # magnitude = self.TF(magnitude)
-        # magnitude[magnitude < self.thres] = 0.
+        magnitude = selfTF(self.thres, magnitude)
 
         # L186-L188
         #
@@ -311,8 +310,7 @@ class Canny_Net(nn.Module):
         abs_jsobel = torch.abs(jsobel)
         magnitude2 = isobel ** 2 + jsobel ** 2
         magnitude = torch.sqrt(magnitude2 + self.eps)
-        self.TF = ThresholdF(self.thres)
-        magnitude = self.TF(magnitude)
+        magnitude = selfTF(self.thres, magnitude)
 
         vis2 = magnitude.clone().detach()
 

@@ -31,8 +31,8 @@ class InterpNets(nn.Module):
 
     def forward(self, x):
 
-        generated1 = self.net1(x, self.mark1)
-        generated2 = self.net1(x, self.mark2)
+        generated1 = self.net1(x, self.mark1).detach()
+        generated2 = self.net1(x, self.mark2).detach()
 
         interp_z = torch.zeros_like(x).uniform_(0, 1).cuda()
 
@@ -50,7 +50,10 @@ class InterpNets(nn.Module):
 
         interp_z = interp_z.clamp(0, 1)
 
-        generated = interp_z * generated1 + (1 - interp_z) * generated2
+        generated1_bp = self.net1(x, self.mark1)
+        generated2_bp = self.net1(x, self.mark2)
+
+        generated = interp_z * generated1_bp + (1 - interp_z) * generated2_bp
 
         return self.net2(generated)
 

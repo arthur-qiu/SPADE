@@ -21,18 +21,18 @@ from adv import pgd, zip_wrn
 from torch import optim
 
 class InterpNets(nn.Module):
-    def __init__(self, net1, net2, z, mark1 = None, mark2 = None):
+    def __init__(self, net1, net2, mark1 = None, mark2 = None):
         super(InterpNets, self).__init__()
         self.net1 = net1
         self.net2 = net2
-        self.interp_z = z
         self.mark1 = mark1
         self.mark2 = mark2
 
     def forward(self, x):
+        attack_interp_z = torch.zeros_like(data)[:, 0:1, :, :].uniform_(0, 1).cuda()
         generated1 = self.net1(x, self.mark1)
         generated2 = self.net1(x, self.mark2)
-        generated = self.interp_z * generated1 + (1 - self.interp_z) * generated2
+        generated = attack_interp_z * generated1 + (1 - attack_interp_z) * generated2
 
         return self.net2(generated)
 
@@ -139,8 +139,7 @@ for data, target in test_loader:
 
     interp_generated = interp_z * generated1 + (1 - interp_z) * generated2
 
-    attack_interp_z = torch.zeros_like(data)[:, 0:1, :, :].uniform_(0, 1).cuda()
-    two_nets = InterpNets(model, net, attack_interp_z, 'just_cannyedge1', 'just_catedge2')
+    two_nets = InterpNets(model, net, 'just_cannyedge1', 'just_catedge2')
 
     adv_data = adversary_test(two_nets, data, target)
 
